@@ -10,6 +10,8 @@ defmodule FlowmindWeb.DemoLive do
       <:col :let={tenant} label="waba">{tenant.waba}</:col>
       <:col :let={tenant} label="config">{tenant.config}</:col>
     </.table>
+    <.range max={100} min={0} value={40}/>
+
     """
   end
   

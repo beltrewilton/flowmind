@@ -9,7 +9,8 @@ module.exports = {
   content: [
     "./js/**/*.js",
     "../lib/flowmind_web.ex",
-    "../lib/flowmind_web/**/*.*ex"
+    "../lib/flowmind_web/**/*.*ex",
+    "../deps/daisy_ui_components/**/*.*ex"
   ],
   theme: {
     extend: {
@@ -19,7 +20,8 @@ module.exports = {
     },
   },
   plugins: [
-    require("@tailwindcss/forms"),
+    // require("@tailwindcss/forms"),
+    require("daisyui"), // <- daisyUI plugin
     // Allows prefixing tailwind classes with LiveView classes to add rules
     // only when LiveView classes are applied, for example:
     //
