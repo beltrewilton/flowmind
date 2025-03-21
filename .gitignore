@@ -35,3 +35,4 @@ flowmind-*.tar
 npm-debug.log
 /assets/node_modules/
 
+/curls/
