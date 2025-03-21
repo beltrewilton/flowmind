@@ -80,6 +80,8 @@ defmodule FlowmindWeb.UserAuth do
     if live_socket_id = get_session(conn, :live_socket_id) do
       FlowmindWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
     end
+    
+    Flowmind.TenantGenServer.remove_tenant()
 
     conn
     |> renew_session()

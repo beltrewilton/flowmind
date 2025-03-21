@@ -1,4 +1,5 @@
 defmodule FlowmindWeb.DashboardLive do
+  alias Flowmind.Accounts
   use FlowmindWeb, :live_view
 
   def doc do
@@ -8,26 +9,70 @@ defmodule FlowmindWeb.DashboardLive do
   @impl true
   def mount(_params, _session, socket) do
     tenant = Flowmind.TenantGenServer.get_tenant()
-    {:ok, assign(socket, tenant: tenant)}
+
+    socket =
+      socket
+      |> assign(:tenant, tenant)
+      |> assign(:tenant_account, nil)
+      |> assign(:oauth_response, nil)
+
+    {:ok, socket}
   end
-  
+
   @impl true
   def handle_event("fb_login_success", %{"response" => response}, socket) do
     IO.inspect(response, label: "Facebook Login Response")
-    {:noreply, assign(socket, :fb_response, response)}
+    token_exchange_code = response["response"]["authResponse"]["code"]
+    # TODO: Run in Task delay 5 segs ...
+    Process.send_after(self(), :run_code_exchange, 5_000)
+
+    socket =
+      socket
+      |> assign(:fb_response, response)
+      |> assign(:token_exchange_code, token_exchange_code)
+
+    {:noreply, socket}
   end
-  
+
   @impl true
   def handle_event("whatsapp_signup_success", %{"data" => data}, socket) do
     IO.inspect(data, label: "WhatsApp Signup Data")
-    {:noreply, assign(socket, :whatsapp_data, data)}
+    {:ok, tenant_account} = Accounts.create_tenant_account(data)
+
+    socket =
+      socket
+      |> assign(:whatsapp_data, data)
+      |> assign(:tenant_account, tenant_account)
+
+    {:noreply, socket}
   end
-  
+
   def handle_event("dummy_event", data, socket) do
     IO.inspect(data, label: "Dummy Data")
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_info(:run_code_exchange, socket) do
+    IO.inspect("run_code_exchange")
+
+    tenant_account = socket.assigns[:tenant_account]
+    token_exchange_code = socket.assigns[:token_exchange_code]
+
+    {:ok, tenant_account} =
+      Accounts.update_tenant_account(tenant_account, %{
+        "token_exchange_code" => token_exchange_code
+      })
+      
+    {_, oauth_response} = WhatsappElixir.Messages.oauth_access_token(token_exchange_code)
+
+    socket =
+      socket
+      |> assign(:tenant_account, tenant_account)
+      |> assign(:oauth_response, oauth_response)
+
+    {:noreply, socket}
+  end
 
   @impl true
   def render(assigns) do
@@ -102,6 +147,24 @@ defmodule FlowmindWeb.DashboardLive do
 
         <p>SDK response:</p>
         <pre id="sdk-response"></pre>
+
+        <.card :if={@tenant_account} class="bg-base-100 w-96 shadow-xl ml-10">
+          <:card_title>Account</:card_title>
+          <:card_body>
+            <p>phone_number_id: {@tenant_account.phone_number_id}</p>
+            <p>waba_id: {@tenant_account.waba_id}</p>
+            <p>
+              token_exchange_code: 
+              <span :if={!@tenant_account.token_exchange_code}><.loading shape="dots"/></span>
+              <span :if={@tenant_account.token_exchange_code}>{@tenant_account.token_exchange_code}</span>
+            </p>
+            <p>
+              oauth_response: 
+              <span :if={!@oauth_response}><.loading shape="dots"/></span>
+              <span :if={@oauth_response}>{@oauth_response}</span>
+            </p>
+          </:card_body>
+        </.card>
 
         <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js">
         </script>

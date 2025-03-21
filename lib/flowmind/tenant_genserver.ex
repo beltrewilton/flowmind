@@ -16,6 +16,10 @@ defmodule Flowmind.TenantGenServer do
     GenServer.call(__MODULE__, :get_tenant)
   end
   
+  def remove_tenant() do
+    GenServer.call(__MODULE__, :remove_tenant)
+  end
+  
   # Server callbacks
 
   @impl true
@@ -34,6 +38,12 @@ defmodule Flowmind.TenantGenServer do
   def handle_call(:get_tenant, from, state) do
     IO.inspect(from, label: "PID -> getting")
     {:reply, Map.get(state, :tenant, "tenant_not_found_in_genserver"), state}
+  end
+  
+  @impl true
+  def handle_call(:remove_tenant, from, state) do
+    IO.inspect(from, label: "PID -> remove")
+    {:reply, :ok, Map.delete(state, :tenant)}
   end
   
 end

@@ -31,6 +31,9 @@ defmodule Flowmind.MixProject do
   #
   # Type `mix help deps` for examples and options.
   defp deps do
+    # export WHATSAPPX_PATH=/Users/beltre.wilton/apps/whatsappx
+    whatsappx_path = System.get_env("WHATSAPPX_PATH")
+    
     [
       {:argon2_elixir, "~> 3.0"},
       {:phoenix, "~> 1.7.18"},
@@ -60,7 +63,8 @@ defmodule Flowmind.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:triplex, "~> 1.3.0"},
-      {:daisy_ui_components, "~> 0.7.6"}
+      {:daisy_ui_components, "~> 0.7.6"},
+      {:whatsappx, path: whatsappx_path}
     ]
   end
 

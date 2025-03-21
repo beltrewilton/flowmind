@@ -43,7 +43,7 @@ defmodule Flowmind.Accounts.User do
   def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email, :password, :name, :company_id])
-    |> validate_length(:name, min: 4, max: 10)
+    |> validate_length(:name, min: 4, max: 50)
     |> validate_email(opts)
     |> validate_password(opts)
   end

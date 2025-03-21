@@ -561,4 +561,70 @@ defmodule Flowmind.AccountsTest do
       assert %Ecto.Changeset{} = Accounts.change_company(company)
     end
   end
+
+  describe "tenant_accounts" do
+    alias Flowmind.Accounts.TenantAccount
+
+    import Flowmind.AccountsFixtures
+
+    @invalid_attrs %{active: nil, phone_number_id: nil, waba_id: nil, token_exchange_code: nil, access_token: nil, subscribed_apps_response: nil, register_ph_response: nil}
+
+    test "list_tenant_accounts/0 returns all tenant_accounts" do
+      tenant_account = tenant_account_fixture()
+      assert Accounts.list_tenant_accounts() == [tenant_account]
+    end
+
+    test "get_tenant_account!/1 returns the tenant_account with given id" do
+      tenant_account = tenant_account_fixture()
+      assert Accounts.get_tenant_account!(tenant_account.id) == tenant_account
+    end
+
+    test "create_tenant_account/1 with valid data creates a tenant_account" do
+      valid_attrs = %{active: true, phone_number_id: "some phone_number_id", waba_id: "some waba_id", token_exchange_code: "some token_exchange_code", access_token: "some access_token", subscribed_apps_response: %{}, register_ph_response: %{}}
+
+      assert {:ok, %TenantAccount{} = tenant_account} = Accounts.create_tenant_account(valid_attrs)
+      assert tenant_account.active == true
+      assert tenant_account.phone_number_id == "some phone_number_id"
+      assert tenant_account.waba_id == "some waba_id"
+      assert tenant_account.token_exchange_code == "some token_exchange_code"
+      assert tenant_account.access_token == "some access_token"
+      assert tenant_account.subscribed_apps_response == %{}
+      assert tenant_account.register_ph_response == %{}
+    end
+
+    test "create_tenant_account/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Accounts.create_tenant_account(@invalid_attrs)
+    end
+
+    test "update_tenant_account/2 with valid data updates the tenant_account" do
+      tenant_account = tenant_account_fixture()
+      update_attrs = %{active: false, phone_number_id: "some updated phone_number_id", waba_id: "some updated waba_id", token_exchange_code: "some updated token_exchange_code", access_token: "some updated access_token", subscribed_apps_response: %{}, register_ph_response: %{}}
+
+      assert {:ok, %TenantAccount{} = tenant_account} = Accounts.update_tenant_account(tenant_account, update_attrs)
+      assert tenant_account.active == false
+      assert tenant_account.phone_number_id == "some updated phone_number_id"
+      assert tenant_account.waba_id == "some updated waba_id"
+      assert tenant_account.token_exchange_code == "some updated token_exchange_code"
+      assert tenant_account.access_token == "some updated access_token"
+      assert tenant_account.subscribed_apps_response == %{}
+      assert tenant_account.register_ph_response == %{}
+    end
+
+    test "update_tenant_account/2 with invalid data returns error changeset" do
+      tenant_account = tenant_account_fixture()
+      assert {:error, %Ecto.Changeset{}} = Accounts.update_tenant_account(tenant_account, @invalid_attrs)
+      assert tenant_account == Accounts.get_tenant_account!(tenant_account.id)
+    end
+
+    test "delete_tenant_account/1 deletes the tenant_account" do
+      tenant_account = tenant_account_fixture()
+      assert {:ok, %TenantAccount{}} = Accounts.delete_tenant_account(tenant_account)
+      assert_raise Ecto.NoResultsError, fn -> Accounts.get_tenant_account!(tenant_account.id) end
+    end
+
+    test "change_tenant_account/1 returns a tenant_account changeset" do
+      tenant_account = tenant_account_fixture()
+      assert %Ecto.Changeset{} = Accounts.change_tenant_account(tenant_account)
+    end
+  end
 end

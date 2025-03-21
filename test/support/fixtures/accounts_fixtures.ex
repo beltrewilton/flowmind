@@ -48,4 +48,24 @@ defmodule Flowmind.AccountsFixtures do
 
     company
   end
+
+  @doc """
+  Generate a tenant_account.
+  """
+  def tenant_account_fixture(attrs \\ %{}) do
+    {:ok, tenant_account} =
+      attrs
+      |> Enum.into(%{
+        access_token: "some access_token",
+        active: true,
+        phone_number_id: "some phone_number_id",
+        register_ph_response: %{},
+        subscribed_apps_response: %{},
+        token_exchange_code: "some token_exchange_code",
+        waba_id: "some waba_id"
+      })
+      |> Flowmind.Accounts.create_tenant_account()
+
+    tenant_account
+  end
 end

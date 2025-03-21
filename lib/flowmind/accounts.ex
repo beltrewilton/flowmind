@@ -6,7 +6,7 @@ defmodule Flowmind.Accounts do
   import Ecto.Query, warn: false
   import Ecto.Changeset
   alias Flowmind.Repo
-  
+
   alias Flowmind.Accounts.{User, UserToken, UserNotifier}
 
   ## Database getters
@@ -447,29 +447,113 @@ defmodule Flowmind.Accounts do
   def change_company(%Company{} = company, attrs \\ %{}) do
     Company.changeset(company, attrs)
   end
-  
-  
+
   def user_company_changeset(%User{} = user, attrs \\ %{}) do
-    # user = Repo.preload(user, :company)
-    
-    # company_changeset = change_company(company, attrs)
-    # user_changeset = change_user_registration(user, attrs)
-    
-    # user_changeset =
-    #   if !company_changeset.valid? do
-    #     Enum.reduce(company_changeset.errors, user_changeset, fn {field, {msg, opts}}, changeset ->
-    #       add_error(changeset, field, msg, opts)
-    #     end)
-    #   else
-    #     user_changeset
-    #   end
-    
-    # put_assoc(user_changeset, :company, company_changeset, [])
-    
     user
     |> Repo.preload(:company)
     |> change_user_registration(attrs)
     |> cast_assoc(:company, with: &change_company/2)
-    
+  end
+
+  alias Flowmind.Accounts.TenantAccount
+
+  @doc """
+  Returns the list of tenant_accounts.
+
+  ## Examples
+
+      iex> list_tenant_accounts()
+      [%TenantAccount{}, ...]
+
+  """
+  def list_tenant_accounts do
+    tenant = Flowmind.TenantGenServer.get_tenant()
+    Repo.all(TenantAccount, prefix: tenant)
+  end
+
+  @doc """
+  Gets a single tenant_account.
+
+  Raises `Ecto.NoResultsError` if the Tenant account does not exist.
+
+  ## Examples
+
+      iex> get_tenant_account!(123)
+      %TenantAccount{}
+
+      iex> get_tenant_account!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_tenant_account!(id) do
+    tenant = Flowmind.TenantGenServer.get_tenant()
+    Repo.get!(TenantAccount, id, prefix: tenant)
+  end
+
+  @doc """
+  Creates a tenant_account.
+
+  ## Examples
+
+      iex> create_tenant_account(%{field: value})
+      {:ok, %TenantAccount{}}
+
+      iex> create_tenant_account(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_tenant_account(attrs \\ %{}) do
+    tenant = Flowmind.TenantGenServer.get_tenant()
+    %TenantAccount{}
+    |> TenantAccount.changeset(attrs)
+    |> Repo.insert(prefix: tenant)
+  end
+
+  @doc """
+  Updates a tenant_account.
+
+  ## Examples
+
+      iex> update_tenant_account(tenant_account, %{field: new_value})
+      {:ok, %TenantAccount{}}
+
+      iex> update_tenant_account(tenant_account, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_tenant_account(%TenantAccount{} = tenant_account, attrs) do
+    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant_account
+    |> TenantAccount.changeset(attrs)
+    |> Repo.update(prefix: tenant)
+  end
+
+  @doc """
+  Deletes a tenant_account.
+
+  ## Examples
+
+      iex> delete_tenant_account(tenant_account)
+      {:ok, %TenantAccount{}}
+
+      iex> delete_tenant_account(tenant_account)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_tenant_account(%TenantAccount{} = tenant_account) do
+    Repo.delete(tenant_account)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking tenant_account changes.
+
+  ## Examples
+
+      iex> change_tenant_account(tenant_account)
+      %Ecto.Changeset{data: %TenantAccount{}}
+
+  """
+  def change_tenant_account(%TenantAccount{} = tenant_account, attrs \\ %{}) do
+    TenantAccount.changeset(tenant_account, attrs)
   end
 end
