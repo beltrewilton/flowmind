@@ -33,7 +33,7 @@ export default PartnerMetaLogin = {
       document.getElementById("sdk-response").textContent = JSON.stringify(
         response,
         null,
-        2,
+        3,
       );
     };
 
@@ -45,7 +45,7 @@ export default PartnerMetaLogin = {
         extras: {
           setup: {},
           featureType: "",
-          sessionInfoVersion: "2",
+          sessionInfoVersion: "3",
         },
       });
     });

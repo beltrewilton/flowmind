@@ -22,7 +22,7 @@ defmodule FlowmindWeb.DashboardLive do
   @impl true
   def handle_event("fb_login_success", %{"response" => response}, socket) do
     IO.inspect(response, label: "Facebook Login Response")
-    token_exchange_code = response["response"]["authResponse"]["code"]
+    token_exchange_code = response["authResponse"]["code"]
     # TODO: Run in Task delay 5 segs ...
     Process.send_after(self(), :run_code_exchange, 5_000)
 
@@ -66,6 +66,9 @@ defmodule FlowmindWeb.DashboardLive do
       
     {_, oauth_response} = WhatsappElixir.Messages.oauth_access_token(token_exchange_code)
 
+    # TODO: subscribe_apps
+    # TODO: register_phone_number
+    
     socket =
       socket
       |> assign(:tenant_account, tenant_account)
@@ -161,7 +164,7 @@ defmodule FlowmindWeb.DashboardLive do
             <p>
               oauth_response: 
               <span :if={!@oauth_response}><.loading shape="dots"/></span>
-              <span :if={@oauth_response}>{@oauth_response}</span>
+              <span :if={@oauth_response}>{@oauth_response.access_token}</span>
             </p>
           </:card_body>
         </.card>
