@@ -11,7 +11,14 @@ defmodule Flowmind.Repo.Migrations.CreateTenantAccounts do
       add :subscribed_apps_response, :map
       add :register_ph_response, :map
       add :active, :boolean, default: false, null: false
-
+      add :connected, :boolean, default: false, null: false
+      add :code_verification_status, :string
+      add :display_phone_number, :string
+      add :platform_type, :string
+      add :quality_rating, :string
+      add :status, :string
+      add :verified_name, :string
+  
       timestamps(type: :utc_datetime)
     end
     

@@ -556,4 +556,54 @@ defmodule Flowmind.Accounts do
   def change_tenant_account(%TenantAccount{} = tenant_account, attrs \\ %{}) do
     TenantAccount.changeset(tenant_account, attrs)
   end
+  
+  
+  def insert_tenant_account(attrs, tenant) do
+    %TenantAccount{}
+    |> TenantAccount.changeset(attrs)
+    |> Repo.insert(prefix: tenant)
+  end
+  
+  def mocked_data(tenant) do
+    # Insert multiple demo tenant accounts
+    [
+      %{
+        active: true,
+        phone_number_id: "606765489182594",
+        waba_id: "443834038808808",
+        token_exchange_code: "AQ1234xyz...",
+        access_token: "mocked_access_token",
+        subscribed_apps_response: %{"success" => true},
+        register_ph_response: %{"success" => true},
+        inserted_at: DateTime.utc_now(),
+        updated_at: DateTime.utc_now(),
+        code_verification_status: "VERIFIED",
+        display_phone_number: "+1 849-657-7713",
+        platform_type: "CLOUD_API",
+        quality_rating: "UNKNOWN",
+        status: "CONNECTED",
+        verified_name: "Ceidi TEST"
+      },
+      %{
+        active: false,
+        phone_number_id: "441214785740868",
+        waba_id: "443834038808808",
+        token_exchange_code: "BQ5678xyz...",
+        access_token: "mocked_access_token",
+        subscribed_apps_response: %{"success" => false},
+        register_ph_response: %{"success" => true},
+        inserted_at: DateTime.utc_now(),
+        updated_at: DateTime.utc_now(),
+        code_verification_status: "EXPIRED",
+        display_phone_number: "+1 849-650-8622",
+        platform_type: "CLOUD_API",
+        quality_rating: "GREEN",
+        status: "CONNECTED",
+        verified_name: "Ceidi - Agente Virtual"
+      }
+    ]
+    |> Enum.each(&insert_tenant_account(&1, tenant))
+    
+    IO.puts("✅ Demo data loaded successfully!")
+    end
 end
