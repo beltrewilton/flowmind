@@ -64,13 +64,18 @@ defmodule FlowmindWeb.Router do
   scope "/", FlowmindWeb do
     pipe_through [:browser, :require_authenticated_user]
 
-    live_session :require_authenticated_user, layout: {FlowmindWeb.DashboardLayouts, :app},
-      on_mount: [{FlowmindWeb.UserAuth, :ensure_authenticated}] do
+    live_session :require_authenticated_user,
+      layout: {FlowmindWeb.DashboardLayouts, :app},
+      on_mount: [
+        {FlowmindWeb.UserAuth, :ensure_authenticated},
+        {FlowmindWeb.PathSocket, :put_path_in_socket}
+      ] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
-      
+
       live "/demo", DemoLive, :index
-      live "/dashboard", DashboardLive, :index
+      live "/dashboard", HomeLive, :index
+      live "/another", AnotherLive, :index
     end
   end
 
