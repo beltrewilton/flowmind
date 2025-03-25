@@ -76,6 +76,7 @@ defmodule FlowmindWeb.Router do
       live "/demo", DemoLive, :index
       live "/dashboard", HomeLive, :index
       live "/another", AnotherLive, :index
+      live "/chat/:sender_phone_number", ChatLive, :index
     end
   end
 

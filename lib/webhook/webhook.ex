@@ -2,6 +2,9 @@ defmodule Webhook.Router do
   use Plug.Router
 
   import Plug.Conn
+  
+  alias Flowmind.Chat
+  alias FlowmindWeb.ChatPubsub
 
   plug(:match)
   plug(Plug.Parsers, parsers: [:json], pass: ["application/json"], json_decoder: Jason)
@@ -52,14 +55,22 @@ defmodule Webhook.Router do
     IO.inspect(rawdata, label: "rawdata")
     
     waba_id = Keyword.get(sender, :waba_id)
-    # sender_phone_number = Keyword.get(sender, :sender_phone_number)
-    # message = Keyword.get(sender, :message)
+    sender_phone_number = Keyword.get(sender, :sender_phone_number)
+    # display_phone_number = Keyword.get(sender, :display_phone_number)
+    phone_number_id = Keyword.get(sender, :phone_number_id)
+    message = Keyword.get(sender, :message)
     # wa_message_id = Keyword.get(sender, :wa_message_id)
     # flow = Keyword.get(sender, :flow)
     # audio_id = Keyword.get(sender, :audio_id)
     # video_id = Keyword.get(sender, :video_id)
     # scheduled = Keyword.get(sender, :scheduled)
     # forwarded = Keyword.get(sender, :forwarded)
+    
+    chat_history_form = %{"message" => message, "phone_number_id" => phone_number_id}
+    
+    ChatPubsub.subscribe(sender_phone_number)
+    
+    Chat.create_chat_history(chat_history_form) |> ChatPubsub.notify(:message_created, sender_phone_number)
       
     log_notification(rawdata, waba_id)
 
