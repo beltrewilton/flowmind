@@ -18,6 +18,7 @@ defmodule Flowmind.Application do
       # {Flowmind.Worker, arg},
       # Start to serve requests, typically the last entry
       FlowmindWeb.Endpoint,
+      {Plug.Cowboy, scheme: :http, plug: Webhook.Router, options: [port: 7001]},
       Flowmind.TenantGenServer
     ]
 
