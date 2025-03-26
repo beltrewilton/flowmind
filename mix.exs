@@ -64,7 +64,7 @@ defmodule Flowmind.MixProject do
       {:bandit, "~> 1.5"},
       {:plug_cowboy, "~> 2.7.2"},
       {:triplex, "~> 1.3.0"},
-      {:daisy_ui_components, "~> 0.7.6"},
+      {:daisy_ui_components, "~> 0.8"},
       {:whatsappx, path: whatsappx_path}
     ]
   end

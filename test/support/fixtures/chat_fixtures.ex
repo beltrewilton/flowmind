@@ -21,4 +21,19 @@ defmodule Flowmind.ChatFixtures do
 
     chat_history
   end
+
+  @doc """
+  Generate a chat_inbox.
+  """
+  def chat_inbox_fixture(attrs \\ %{}) do
+    {:ok, chat_inbox} =
+      attrs
+      |> Enum.into(%{
+        phone_number_id: "some phone_number_id",
+        sender_phone_number: "some sender_phone_number"
+      })
+      |> Flowmind.Chat.create_chat_inbox()
+
+    chat_inbox
+  end
 end

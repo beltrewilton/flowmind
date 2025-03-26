@@ -66,7 +66,7 @@ defmodule Webhook.Router do
     # scheduled = Keyword.get(sender, :scheduled)
     # forwarded = Keyword.get(sender, :forwarded)
     
-    chat_history_form = %{"message" => message, "phone_number_id" => phone_number_id}
+    chat_history_form = %{"message" => message, "phone_number_id" => phone_number_id, "sender_phone_number" => sender_phone_number}
     
     ChatPubsub.subscribe(sender_phone_number)
     

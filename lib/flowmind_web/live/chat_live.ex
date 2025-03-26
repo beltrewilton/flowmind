@@ -17,19 +17,24 @@ defmodule FlowmindWeb.ChatLive do
 
     if connected?(socket), do: ChatPubsub.subscribe(sender_phone_number)
 
-    chat_history = Chat.list_chat_history()
+    chat_history = Chat.list_chat_history(sender_phone_number)
+
+    chat_inbox = Chat.list_chat_inbox()
 
     form_source = Chat.change_chat_history(%ChatHistory{})
+    
+    tenant = Flowmind.TenantGenServer.get_tenant()
 
     socket =
       socket
       |> assign(:chat_history, chat_history)
-      |> assign(:tenant, nil)
+      |> assign(:chat_inbox, chat_inbox)
+      |> assign(:tenant, tenant)
       |> assign(:tenant_accounts, [])
       |> assign(:sender_phone_number, sender_phone_number)
       |> assign_form(form_source)
 
-    {:ok, socket}
+    {:ok, socket, layout: {FlowmindWeb.ChatLayouts, :app}}
   end
 
   @impl true
@@ -54,6 +59,29 @@ defmodule FlowmindWeb.ChatLive do
     IO.inspect("No acredito!", label: "WOW")
     chat_history = socket.assigns.chat_history ++ [message]
     {:noreply, assign(socket, chat_history: chat_history)}
+  end
+
+  def handle_params(params, _uri, socket) do
+    sender_phone_number = params["sender_phone_number"]
+    old_sender_phone_number = socket.assigns.sender_phone_number
+    
+    IO.inspect(DateTime.utc_now(), label: "DateTime.utc_now()")
+    IO.inspect(sender_phone_number, label: "sender_phone_number")
+    IO.inspect(old_sender_phone_number, label: "old_sender_phone_number")
+     
+    if connected?(socket) do
+      ChatPubsub.unsubscribe(old_sender_phone_number)
+      ChatPubsub.subscribe(sender_phone_number)
+    end
+
+    chat_history = Chat.list_chat_history(sender_phone_number)
+
+    socket =
+      socket
+      |> assign(:chat_history, chat_history)
+      |> assign(:sender_phone_number, sender_phone_number)
+
+    {:noreply, socket}
   end
 
   defp assign_form(socket, %{} = source) do
