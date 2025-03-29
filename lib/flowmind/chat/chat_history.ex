@@ -6,6 +6,7 @@ defmodule Flowmind.Chat.ChatHistory do
   @foreign_key_type :binary_id
   schema "chat_history" do
     field :message, :string
+    field :source, Ecto.Enum, values: [:user, :ai, :agent], default: :user
     field :phone_number_id, :string
     field :whatsapp_id, :string
     field :sender_phone_number, :string
@@ -18,7 +19,7 @@ defmodule Flowmind.Chat.ChatHistory do
   @doc false
   def changeset(chat_history, attrs) do
     chat_history
-    |> cast(attrs, [:phone_number_id, :whatsapp_id, :sender_phone_number, :message, :readed, :collected])
-    |> validate_required([:phone_number_id, :message, :sender_phone_number])
+    |> cast(attrs, [:phone_number_id, :whatsapp_id, :sender_phone_number, :message, :source, :readed, :collected])
+    |> validate_required([:message, :sender_phone_number])
   end
 end

@@ -8,6 +8,7 @@ defmodule Flowmind.Repo.Migrations.CreateChatHistory do
       add :whatsapp_id, :string
       add :sender_phone_number, :string
       add :message, :text
+      add :source, :string
       add :readed, :boolean, default: false, null: false
       add :collected, :boolean, default: false, null: false
 

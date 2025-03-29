@@ -182,14 +182,14 @@ defmodule Flowmind.Chat do
            prefix: tenant
          ) do
       nil ->
-        attrs = Map.put(attrs, "phone_number_id", UUID.uuid1())
+        attrs = Map.put(attrs, "seed", UUID.uuid1())
 
         %ChatInbox{}
         |> ChatInbox.changeset(attrs)
         |> Repo.insert(prefix: tenant)
 
       chat_inbox ->
-        attrs = Map.put(attrs, "phone_number_id", UUID.uuid1())
+        attrs = Map.put(attrs, "seed", UUID.uuid1())
 
         chat_inbox
         |> ChatInbox.changeset(attrs)
