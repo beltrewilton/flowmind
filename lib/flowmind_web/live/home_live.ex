@@ -220,7 +220,7 @@ defmodule FlowmindWeb.HomeLive do
           </:card_body>
           <:card_actions class="justify-end">
             <div :if={!tenant_account.active and !tenant_account.connected} class="h-12"></div>
-            <.link href={"/chat/"}>
+            <.link href={"/chat/#{tenant_account.phone_number_id}"}>
               <button
                 :if={tenant_account.active and tenant_account.connected}
                 class="btn btn-primary flex items-center gap-2"

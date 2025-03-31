@@ -12,14 +12,13 @@ defmodule FlowmindWeb.ChatLive do
 
   @impl true
   def mount(params, _session, socket) do
-    IO.inspect(params, label: "params")
+    IO.inspect(params, label: "mount init")
     sender_phone_number = Map.get(params, "sender_phone_number")
+    phone_number_id = Map.get(params, "phone_number_id")
 
     if connected?(socket), do: ChatPubsub.subscribe(sender_phone_number)
 
-    # TODO: get from session [tenant_account]
-    display_phone_number = "18496577713"
-    if connected?(socket), do: ChatPubsub.subscribe(display_phone_number)
+    if connected?(socket), do: ChatPubsub.subscribe(phone_number_id)
 
     chat_inbox = Chat.list_chat_inbox()
 
@@ -33,6 +32,7 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:chat_inbox, chat_inbox)
       |> assign(:tenant, tenant)
       |> assign(:tenant_accounts, [])
+      |> assign(:phone_number_id, phone_number_id)
       |> assign(:sender_phone_number, sender_phone_number)
       |> assign(:old_sender_phone_number, sender_phone_number)
       |> assign_form(form_source)
@@ -45,14 +45,16 @@ defmodule FlowmindWeb.ChatLive do
   def handle_event("send", %{"chat_entry_form" => chat_entry_form}, socket) do
     IO.inspect(chat_entry_form, label: "chat_entry_form")
     sender_phone_number = socket.assigns.sender_phone_number
+    phone_number_id = socket.assigns.phone_number_id
 
-    chat_entry_form = Map.put(chat_entry_form, "source", :agent)
-    chat_entry_form = Map.put(chat_entry_form, "sender_phone_number", sender_phone_number)
+    chat_entry_form =
+      chat_entry_form
+      |> Map.put("source", :agent)
+      |> Map.put("sender_phone_number", sender_phone_number)
 
     WhatsappElixir.Messages.send_message(
       sender_phone_number,
-      # TODO: get from session [tenant_account]
-      "606765489182594",
+      phone_number_id,
       chat_entry_form["message"],
       WhatsappElixir.Messages.get_config()
     )
@@ -81,15 +83,19 @@ defmodule FlowmindWeb.ChatLive do
     # chat_inbox = socket.assigns.chat_inbox ++ [message]
     chat_inbox = Chat.list_chat_inbox()
     current_path = socket.assigns.current_path
+    chat_history = socket.assigns.chat_history
 
     sender_phone_number = message.sender_phone_number
+    phone_number_id = message.phone_number_id
     IO.inspect(current_path, label: "handle_info current_path")
     IO.inspect(sender_phone_number, label: "handle_info sender_phone_number")
 
     is_active_number? = String.contains?(current_path, sender_phone_number)
 
     chat_inbox =
-      if is_active_number?, do: as_readed(chat_inbox, sender_phone_number), else: chat_inbox
+      if is_active_number?,
+        do: as_readed(chat_inbox, sender_phone_number, chat_history, phone_number_id),
+        else: chat_inbox
 
     phone_number_id = message.phone_number_id
 
@@ -107,24 +113,30 @@ defmodule FlowmindWeb.ChatLive do
   def handle_params(params, _uri, socket) do
     sender_phone_number = params["sender_phone_number"]
     old_sender_phone_number = socket.assigns.old_sender_phone_number
+    phone_number_id = socket.assigns.phone_number_id
     chat_inbox = socket.assigns.chat_inbox
 
     IO.inspect(DateTime.utc_now(), label: "DateTime.utc_now()")
     IO.inspect(sender_phone_number, label: "sender_phone_number")
     IO.inspect(old_sender_phone_number, label: "old_sender_phone_number")
 
-    # inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
-    # if !is_nil(inbox), do: Chat.update_chat_inbox(inbox, %{"readed" => true})
+    inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
+
+    IO.inspect(inbox, label: "inbox")
+
+    chat_history = Chat.list_chat_history(sender_phone_number)
+
+    was_readed = if is_nil(inbox), do: true, else: inbox.readed
 
     chat_inbox =
-      chat_inbox |> as_readed(sender_phone_number)
+      chat_inbox |> as_readed(sender_phone_number, chat_history, phone_number_id, was_readed)
+
+    if !is_nil(inbox), do: Chat.update_chat_inbox(inbox, %{"readed" => true})
 
     if connected?(socket) do
       ChatPubsub.unsubscribe(old_sender_phone_number)
       ChatPubsub.subscribe(sender_phone_number)
     end
-
-    chat_history = Chat.list_chat_history(sender_phone_number)
 
     # IO.inspect(chat_history, label: "chat_history")
 
@@ -143,15 +155,34 @@ defmodule FlowmindWeb.ChatLive do
     assign(socket, :form, to_form(source, as: "chat_entry_form"))
   end
 
-  defp as_readed(chat_inbox, sender_phone_number) do
+  defp as_readed(
+         chat_inbox,
+         sender_phone_number,
+         chat_history,
+         phone_number_id,
+         was_readed \\ false
+       ) do
     chat_inbox =
       Enum.map(chat_inbox, fn chat ->
         if chat.sender_phone_number == sender_phone_number do
+          if length(chat_history) > 0 and !was_readed do
+            chat = List.last(chat_history)
+            send_readed(chat.whatsapp_id, phone_number_id)
+          end
+
           %{chat | readed: true}
         else
           chat
         end
       end)
+  end
+
+  defp send_readed(message_id, phone_number_id) do
+    WhatsappElixir.Messages.mark_as_read(
+      message_id,
+      phone_number_id,
+      WhatsappElixir.Messages.get_config()
+    )
   end
 
   @impl true
@@ -161,8 +192,7 @@ defmodule FlowmindWeb.ChatLive do
       <div class="w-[65%]  overflow-y-auto" id="chat-messages" phx-hook="ScrolltoBottom">
         <%= for chat <- @chat_history do %>
           <% chat_css = if chat.source == :user, do: 'chat-start', else: 'chat-end'
-              face = if chat.source == :user, do: "face1", else: "face2" 
-          %>
+          face = if chat.source == :user, do: "face1", else: "face2" %>
           <div class={"chat m-5 #{chat_css}"}>
             <div class="chat-image avatar">
               <div class="w-10 rounded-full">

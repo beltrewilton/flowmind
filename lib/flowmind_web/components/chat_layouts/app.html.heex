@@ -63,9 +63,9 @@
             <%= for inbox <- @chat_inbox do %>
               <li>
                 <.link
-                  patch={~p"/chat/#{inbox.sender_phone_number}"}
+                  patch={~p"/chat/#{@phone_number_id}/#{inbox.sender_phone_number}"}
                   class={
-                    if @current_path == "/chat/#{inbox.sender_phone_number}",
+                    if @current_path == "/chat/#{@phone_number_id}/#{inbox.sender_phone_number}",
                       do: "w-full menu-active",
                       else: "w-full"
                   }

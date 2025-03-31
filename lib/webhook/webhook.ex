@@ -2,7 +2,7 @@ defmodule Webhook.Router do
   use Plug.Router
 
   import Plug.Conn
-  
+
   alias Flowmind.Chat
   alias FlowmindWeb.ChatPubsub
 
@@ -47,39 +47,48 @@ defmodule Webhook.Router do
 
   def handle_notification(%Whatsapp.Client.Sender{} = data, rawdata, tenant) do
     sender = data.sender_request
-    
+
     IO.inspect(tenant, label: "tenant")
-    
-    IO.inspect(sender, label: "sender")
-    
-    IO.inspect(rawdata, label: "rawdata")
-    
+
+    # IO.inspect(sender, label: "sender")
+
+    # IO.inspect(rawdata, label: "rawdata")
+
     waba_id = Keyword.get(sender, :waba_id)
     sender_phone_number = Keyword.get(sender, :sender_phone_number)
     display_phone_number = Keyword.get(sender, :display_phone_number)
     phone_number_id = Keyword.get(sender, :phone_number_id)
     message = Keyword.get(sender, :message)
-    # wa_message_id = Keyword.get(sender, :wa_message_id)
+    wa_message_id = Keyword.get(sender, :wa_message_id)
     # flow = Keyword.get(sender, :flow)
     # audio_id = Keyword.get(sender, :audio_id)
     # video_id = Keyword.get(sender, :video_id)
     # scheduled = Keyword.get(sender, :scheduled)
     # forwarded = Keyword.get(sender, :forwarded)
-    
-    IO.inspect(phone_number_id, label: "webhook phone_number_id")
-    
-    chat_history_form = %{"message" => message, "phone_number_id" => phone_number_id, "sender_phone_number" => sender_phone_number}
-    
-    chat_inbox = %{"sender_phone_number" => sender_phone_number, "phone_number_id" => phone_number_id, "readed" => false}
-    
-    ChatPubsub.subscribe(sender_phone_number)
-    
-    Chat.create_chat_history(chat_history_form) |> ChatPubsub.notify(:message_created, sender_phone_number)
-    
-    Chat.create_chat_inbox(chat_inbox) |> ChatPubsub.notify(:refresh_inbox, display_phone_number)
-      
-    log_notification(rawdata, waba_id)
 
+    IO.inspect(phone_number_id, label: "webhook phone_number_id")
+
+    chat_history_form = %{
+      "message" => message,
+      "phone_number_id" => phone_number_id,
+      "sender_phone_number" => sender_phone_number,
+      "whatsapp_id" => wa_message_id
+    }
+
+    chat_inbox = %{
+      "sender_phone_number" => sender_phone_number,
+      "phone_number_id" => phone_number_id,
+      "readed" => false
+    }
+
+    ChatPubsub.subscribe(sender_phone_number)
+
+    Chat.create_chat_history(chat_history_form)
+    |> ChatPubsub.notify(:message_created, sender_phone_number)
+
+    Chat.create_chat_inbox(chat_inbox) |> ChatPubsub.notify(:refresh_inbox, phone_number_id)
+
+    log_notification(rawdata, waba_id)
   end
 
   def handle_notification(%Whatsapp.Meta.Request{} = data, rawdata, tenant) do
@@ -97,16 +106,16 @@ defmodule Webhook.Router do
   end
 
   def log_notification(data, waba_id) do
-    Task.async(
-      fn ->
-        Process.sleep(5_000)
-        log = %WebHookLog{
-          source: @source_webhook,
-          response: data,
-          waba_id: waba_id
-        }
-        Webhook.Data.webhook_log(log)
-      end
-    )
+    Task.async(fn ->
+      Process.sleep(5_000)
+
+      log = %WebHookLog{
+        source: @source_webhook,
+        response: data,
+        waba_id: waba_id
+      }
+
+      Webhook.Data.webhook_log(log)
+    end)
   end
 end
