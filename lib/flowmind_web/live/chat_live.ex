@@ -17,11 +17,9 @@ defmodule FlowmindWeb.ChatLive do
 
     if connected?(socket), do: ChatPubsub.subscribe(sender_phone_number)
 
-    # TODO:
+    # TODO: get from session [tenant_account]
     display_phone_number = "18496577713"
     if connected?(socket), do: ChatPubsub.subscribe(display_phone_number)
-
-    # chat_history = Chat.list_chat_history(sender_phone_number)
 
     chat_inbox = Chat.list_chat_inbox()
 
@@ -36,6 +34,7 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:tenant, tenant)
       |> assign(:tenant_accounts, [])
       |> assign(:sender_phone_number, sender_phone_number)
+      |> assign(:old_sender_phone_number, sender_phone_number)
       |> assign_form(form_source)
       |> push_event("scrolldown", %{value: 1})
 
@@ -43,29 +42,23 @@ defmodule FlowmindWeb.ChatLive do
   end
 
   @impl true
-  def handle_event("send", %{"chat_history_form" => chat_history_form}, socket) do
-    IO.inspect(chat_history_form, label: "chat_history_form")
+  def handle_event("send", %{"chat_entry_form" => chat_entry_form}, socket) do
+    IO.inspect(chat_entry_form, label: "chat_entry_form")
     sender_phone_number = socket.assigns.sender_phone_number
 
-    chat_history_form = Map.put(chat_history_form, "source", :agent)
-    chat_history_form = Map.put(chat_history_form, "sender_phone_number", sender_phone_number)
+    chat_entry_form = Map.put(chat_entry_form, "source", :agent)
+    chat_entry_form = Map.put(chat_entry_form, "sender_phone_number", sender_phone_number)
 
     WhatsappElixir.Messages.send_message(
       sender_phone_number,
-      # TODO:
+      # TODO: get from session [tenant_account]
       "606765489182594",
-      chat_history_form["message"],
+      chat_entry_form["message"],
       WhatsappElixir.Messages.get_config()
     )
 
-    Chat.create_chat_history(chat_history_form)
+    Chat.create_chat_history(chat_entry_form)
     |> ChatPubsub.notify(:message_created, sender_phone_number)
-
-    # chat_history = Chat.list_chat_history()
-
-    # socket =
-    #   socket
-    #   |> assign(:chat_history, chat_history)
 
     {:noreply, socket}
   end
@@ -85,7 +78,18 @@ defmodule FlowmindWeb.ChatLive do
 
   @impl true
   def handle_info({:refresh_inbox, message}, socket) do
-    chat_inbox = socket.assigns.chat_inbox ++ [message]
+    # chat_inbox = socket.assigns.chat_inbox ++ [message]
+    chat_inbox = Chat.list_chat_inbox()
+    current_path = socket.assigns.current_path
+
+    sender_phone_number = message.sender_phone_number
+    IO.inspect(current_path, label: "handle_info current_path")
+    IO.inspect(sender_phone_number, label: "handle_info sender_phone_number")
+
+    is_active_number? = String.contains?(current_path, sender_phone_number)
+
+    chat_inbox =
+      if is_active_number?, do: as_readed(chat_inbox, sender_phone_number), else: chat_inbox
 
     phone_number_id = message.phone_number_id
 
@@ -102,15 +106,18 @@ defmodule FlowmindWeb.ChatLive do
   @impl true
   def handle_params(params, _uri, socket) do
     sender_phone_number = params["sender_phone_number"]
-    old_sender_phone_number = socket.assigns.sender_phone_number
+    old_sender_phone_number = socket.assigns.old_sender_phone_number
     chat_inbox = socket.assigns.chat_inbox
 
     IO.inspect(DateTime.utc_now(), label: "DateTime.utc_now()")
     IO.inspect(sender_phone_number, label: "sender_phone_number")
     IO.inspect(old_sender_phone_number, label: "old_sender_phone_number")
-    
-    # inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
 
+    # inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
+    # if !is_nil(inbox), do: Chat.update_chat_inbox(inbox, %{"readed" => true})
+
+    chat_inbox =
+      chat_inbox |> as_readed(sender_phone_number)
 
     if connected?(socket) do
       ChatPubsub.unsubscribe(old_sender_phone_number)
@@ -126,13 +133,25 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:chat_inbox, chat_inbox)
       |> assign(:chat_history, chat_history)
       |> assign(:sender_phone_number, sender_phone_number)
+      |> assign(:old_sender_phone_number, sender_phone_number)
       |> push_event("scrolldown", %{value: 1})
 
     {:noreply, socket}
   end
 
   defp assign_form(socket, %{} = source) do
-    assign(socket, :form, to_form(source, as: "chat_history_form"))
+    assign(socket, :form, to_form(source, as: "chat_entry_form"))
+  end
+
+  defp as_readed(chat_inbox, sender_phone_number) do
+    chat_inbox =
+      Enum.map(chat_inbox, fn chat ->
+        if chat.sender_phone_number == sender_phone_number do
+          %{chat | readed: true}
+        else
+          chat
+        end
+      end)
   end
 
   @impl true
@@ -141,21 +160,13 @@ defmodule FlowmindWeb.ChatLive do
     <div class="flex flex-col h-[90vh]">
       <div class="w-[65%]  overflow-y-auto" id="chat-messages" phx-hook="ScrolltoBottom">
         <%= for chat <- @chat_history do %>
-          <% chat_css = if chat.source == :user, do: 'chat-start', else: 'chat-end' %>
+          <% chat_css = if chat.source == :user, do: 'chat-start', else: 'chat-end'
+              face = if chat.source == :user, do: "face1", else: "face2" 
+          %>
           <div class={"chat m-5 #{chat_css}"}>
             <div class="chat-image avatar">
               <div class="w-10 rounded-full">
-                <img
-                  :if={chat.source == :user}
-                  alt="Tailwind CSS chat bubble component"
-                  src={"https://i.pravatar.cc/150?u=#{chat.sender_phone_number}"}
-                />
-                <img
-                  :if={chat.source == :agent}
-                  alt="Tailwind CSS chat bubble component"
-                  src="https://i.pravatar.cc/150?u=random"
-                  }
-                />
+                <img src={"/images/#{face}.jpg"} />
               </div>
             </div>
             <div class="chat-header">
@@ -176,13 +187,13 @@ defmodule FlowmindWeb.ChatLive do
           class="grid grid-cols-[80%_20%] gap-2 w-full mt-0"
         >
           <.input
-            phx-mounted={JS.focus()}
+            phx-update={JS.focus()}
             field={@form[:message]}
             type="text"
             placeholder="Type a message..."
             class="w-full  border border-gray-500 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500"
           />
-          
+
           <:actions>
             <.button
               phx-disable-with="sending..."

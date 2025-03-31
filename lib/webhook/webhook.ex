@@ -70,7 +70,7 @@ defmodule Webhook.Router do
     
     chat_history_form = %{"message" => message, "phone_number_id" => phone_number_id, "sender_phone_number" => sender_phone_number}
     
-    chat_inbox = %{"sender_phone_number" => sender_phone_number, "phone_number_id" => phone_number_id,}
+    chat_inbox = %{"sender_phone_number" => sender_phone_number, "phone_number_id" => phone_number_id, "readed" => false}
     
     ChatPubsub.subscribe(sender_phone_number)
     

@@ -63,21 +63,21 @@
             <%= for inbox <- @chat_inbox do %>
               <li>
                 <.link
-                  navigate={~p"/chat/#{inbox.sender_phone_number}"}
+                  patch={~p"/chat/#{inbox.sender_phone_number}"}
                   class={
                     if @current_path == "/chat/#{inbox.sender_phone_number}",
-                      do: "menu-active",
-                      else: ""
+                      do: "w-full menu-active",
+                      else: "w-full"
                   }
                 >
-                  <div class="flex col-2 gap-1 pl-1 pb-4">
+                  <div class="flex w-full col-3 gap-1 pl-1 pb-4 justify-center">
                     <.avatar online>
                       <div class="w-8 rounded-full">
                         <img src={"https://i.pravatar.cc/150?u=#{inbox.sender_phone_number}"} />
                       </div>
                     </.avatar>
-                    {inbox.sender_phone_number}
-                    {inbox.readed}
+                    <span class="w-full">{inbox.sender_phone_number}</span>
+                    <.icon :if={!inbox.readed} name="hero-bell-alert" class="text-xs"/>
                   </div>
                 </.link>
               </li>
