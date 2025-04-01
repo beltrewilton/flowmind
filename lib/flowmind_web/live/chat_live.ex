@@ -147,6 +147,7 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:sender_phone_number, sender_phone_number)
       |> assign(:old_sender_phone_number, sender_phone_number)
       |> push_event("scrolldown", %{value: 1})
+      |> push_event("focus_on_input_text", %{value: 1})
 
     {:noreply, socket}
   end
@@ -217,7 +218,7 @@ defmodule FlowmindWeb.ChatLive do
           class="grid grid-cols-[80%_20%] gap-2 w-full mt-0"
         >
           <.input
-            phx-update={JS.focus()}
+            phx-hook="FocusOnInputText"
             field={@form[:message]}
             type="text"
             placeholder="Type a message..."

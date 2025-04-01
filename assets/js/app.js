@@ -23,10 +23,12 @@ import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import PartnerMetaLogin from "./partnermeta"
 import ScrolltoBottom from "./scrolltobottom"
+import FocusOnInputText from "./focus_on_send"
 
 let hooks = {}
 hooks.PartnerMetaLogin = PartnerMetaLogin
 hooks.ScrolltoBottom = ScrolltoBottom
+hooks.FocusOnInputText = FocusOnInputText
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
