@@ -10,6 +10,8 @@ defmodule Flowmind.Chat.ChatHistory do
     field :phone_number_id, :string
     field :whatsapp_id, :string
     field :sender_phone_number, :string
+    field :message_type, :string, default: "text"
+    field :caption, :string
     field :readed, :boolean, default: false
     field :collected, :boolean, default: false
 
@@ -19,7 +21,17 @@ defmodule Flowmind.Chat.ChatHistory do
   @doc false
   def changeset(chat_history, attrs) do
     chat_history
-    |> cast(attrs, [:phone_number_id, :whatsapp_id, :sender_phone_number, :message, :source, :readed, :collected])
+    |> cast(attrs, [
+      :phone_number_id,
+      :whatsapp_id,
+      :sender_phone_number,
+      :message,
+      :source,
+      :readed,
+      :message_type,
+      :caption,
+      :collected
+    ])
     |> validate_required([:message, :sender_phone_number])
   end
 end

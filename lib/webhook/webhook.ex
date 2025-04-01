@@ -12,6 +12,7 @@ defmodule Webhook.Router do
 
   # alias DBConnection.Task
   alias WhatsappElixir.Static, as: WS
+  alias WhatsappElixir.MediaDl
 
   @source_webhook "WEBHOOK"
 
@@ -50,9 +51,9 @@ defmodule Webhook.Router do
 
     IO.inspect(tenant, label: "tenant")
 
-    # IO.inspect(sender, label: "sender")
+    IO.inspect(sender, label: "sender")
 
-    # IO.inspect(rawdata, label: "rawdata")
+    IO.inspect(rawdata, label: "rawdata")
 
     waba_id = Keyword.get(sender, :waba_id)
     sender_phone_number = Keyword.get(sender, :sender_phone_number)
@@ -60,11 +61,20 @@ defmodule Webhook.Router do
     phone_number_id = Keyword.get(sender, :phone_number_id)
     message = Keyword.get(sender, :message)
     wa_message_id = Keyword.get(sender, :wa_message_id)
+    message_type = Keyword.get(sender, :message_type)
+    image_caption = Keyword.get(sender, :image_caption)
     # flow = Keyword.get(sender, :flow)
+    # image_id = Keyword.get(sender, :image_id)
     # audio_id = Keyword.get(sender, :audio_id)
     # video_id = Keyword.get(sender, :video_id)
     # scheduled = Keyword.get(sender, :scheduled)
     # forwarded = Keyword.get(sender, :forwarded)
+    #
+
+    message =
+      if is_nil(message),
+        do: handle_multimedia(sender, message_type, display_phone_number, waba_id),
+        else: message
 
     IO.inspect(phone_number_id, label: "webhook phone_number_id")
 
@@ -72,7 +82,9 @@ defmodule Webhook.Router do
       "message" => message,
       "phone_number_id" => phone_number_id,
       "sender_phone_number" => sender_phone_number,
-      "whatsapp_id" => wa_message_id
+      "whatsapp_id" => wa_message_id,
+      "message_type" => message_type,
+      "caption" => image_caption
     }
 
     chat_inbox = %{
@@ -103,6 +115,50 @@ defmodule Webhook.Router do
 
   def handle_notification(_, _) do
     IO.puts("Nothing todo handle_notification !")
+  end
+
+  defp handle_multimedia(sender, message_type, display_phone_number, waba_id) do
+    {message_type, message_type_id} =
+      case message_type do
+        "image" ->
+          image_id = Keyword.get(sender, :image_id)
+          {:image, image_id}
+
+        "sticker" ->
+          image_id = Keyword.get(sender, :sticker_id)
+          {:sticker, image_id}
+
+        "audio" ->
+          audio_id = Keyword.get(sender, :audio_id)
+          {:audio, audio_id}
+
+        "video" ->
+          video_id = Keyword.get(sender, :video_id)
+          {:video, video_id}
+
+        _ ->
+          {:error, :not_found}
+      end
+
+    {_, filename} =
+      MediaDl.get(
+        message_type_id,
+        display_phone_number,
+        UUID.uuid1(),
+        waba_id,
+        :media,
+        message_type
+      )
+
+    {_, filename} =
+      if message_type == :audio do
+        MediaDl.ogg_to_wav(filename)
+      else
+        {:ok, filename}
+      end
+
+    filename = filename |> String.split("multimedia") |> Enum.at(1)
+    "/images/multimedia#{filename}"
   end
 
   def log_notification(data, waba_id) do

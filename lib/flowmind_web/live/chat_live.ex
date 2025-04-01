@@ -204,7 +204,29 @@ defmodule FlowmindWeb.ChatLive do
               {chat.sender_phone_number}
               <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
             </div>
-            <div class="chat-bubble">{chat.message}</div>
+            <div :if={chat.message_type == "text"} class="chat-bubble">{chat.message}</div>
+            <div :if={chat.message_type == "image"} class="chat-bubble">
+              <img
+                src={chat.message}
+                alt=""
+                class="max-w-xs md:max-w-sm lg:max-w-md w-auto h-auto rounded-lg shadow-md object-cover"
+              />
+              <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
+            </div>
+            <div :if={chat.message_type == "sticker"} class="chat-bubble">
+              <img
+                src={chat.message}
+                alt=""
+                class="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md shadow-sm object-cover"
+              />
+              <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
+            </div>
+            <div :if={chat.message_type == "audio"} class="chat-bubble">
+              <audio controls class="appearance-none bg-transparent">
+                <source src={chat.message} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
             <div class="chat-footer opacity-50">Delivered</div>
           </div>
         <% end %>
