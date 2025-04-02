@@ -35,6 +35,8 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:phone_number_id, phone_number_id)
       |> assign(:sender_phone_number, sender_phone_number)
       |> assign(:old_sender_phone_number, sender_phone_number)
+      |> assign(:uploaded_files, [])
+      |> allow_upload(:avatar, accept: ~w(.jpg .jpeg .png .wav .mp4 .pdf), max_entries: 2)
       |> assign_form(form_source)
       |> push_event("scrolldown", %{value: 1})
 
@@ -42,26 +44,93 @@ defmodule FlowmindWeb.ChatLive do
   end
 
   @impl true
-  def handle_event("send", %{"chat_entry_form" => chat_entry_form}, socket) do
-    IO.inspect(chat_entry_form, label: "chat_entry_form")
+  def handle_event("send", entry_form, socket) do
+    chat_entry_form = Map.get(entry_form, "chat_entry_form")
+
+    IO.inspect(entry_form, label: "entry_form")
+
     sender_phone_number = socket.assigns.sender_phone_number
     phone_number_id = socket.assigns.phone_number_id
+
+    uploaded_files =
+      consume_uploaded_entries(socket, :avatar, fn %{path: path}, entry ->
+        client_name = entry.client_name
+        dest = Path.join([:code.priv_dir(:flowmind), "static", "images", "uploads", client_name])
+        File.cp!(path, dest)
+        {:ok, "#{File.cwd!()}/priv/static/images/uploads/#{Path.basename(dest)}"}
+      end)
+
+    IO.inspect(uploaded_files, label: "uploaded_files")
+
+    message_type =
+      case uploaded_files do
+        [] ->
+          WhatsappElixir.Messages.send_message(
+            sender_phone_number,
+            phone_number_id,
+            chat_entry_form["message"],
+            WhatsappElixir.Messages.get_config()
+          )
+
+          "text"
+
+        # TODO: must be a lot of files.
+        filenames ->
+          media_type = MIME.from_path(Enum.at(filenames, 0)) |> String.split("/") |> Enum.at(0)
+
+          IO.inspect(MIME.from_path(Enum.at(filenames, 0)), label: "MIME Type")
+
+          {_, filename} =
+            if media_type == "audio" do
+              WhatsappElixir.MediaDl.wav_to_ogg(Enum.at(filenames, 0))
+            else
+              {:ok, Enum.at(filenames, 0)}
+            end
+
+          {_, %{"id" => media_id}} =
+            WhatsappElixir.MediaDl.upload(phone_number_id, filename)
+
+          IO.inspect(media_id, label: "media_id")
+          IO.inspect(media_type, label: "media_type")
+
+          WhatsappElixir.Messages.send_media_message(
+            sender_phone_number,
+            phone_number_id,
+            media_id,
+            media_type,
+            WhatsappElixir.Messages.get_config(),
+            chat_entry_form["message"]
+          )
+
+          media_type
+      end
 
     chat_entry_form =
       chat_entry_form
       |> Map.put("source", :agent)
       |> Map.put("sender_phone_number", sender_phone_number)
 
-    WhatsappElixir.Messages.send_message(
-      sender_phone_number,
-      phone_number_id,
-      chat_entry_form["message"],
-      WhatsappElixir.Messages.get_config()
-    )
+    chat_entry_form =
+      if length(uploaded_files) > 0 do
+        basename = Path.basename(Enum.at(uploaded_files, 0))
+
+        chat_entry_form
+        |> Map.put("caption", Map.get(chat_entry_form, "message", ":)"))
+        |> Map.put("message", "/images/uploads/#{basename}")
+        |> Map.put("message_type", message_type)
+      else
+        chat_entry_form
+      end
 
     Chat.create_chat_history(chat_entry_form)
     |> ChatPubsub.notify(:message_created, sender_phone_number)
 
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("validate", chat_entry_form, socket) do
+    IO.inspect(chat_entry_form, label: "chat_entry_form")
     {:noreply, socket}
   end
 
@@ -205,6 +274,9 @@ defmodule FlowmindWeb.ChatLive do
               <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
             </div>
             <div :if={chat.message_type == "text"} class="chat-bubble">{chat.message}</div>
+            <div :if={chat.message_type == "application"} class="chat-bubble">
+              <.icon name="hero-document-text" /> {chat.message}
+            </div>
             <div :if={chat.message_type == "image"} class="chat-bubble">
               <img
                 src={chat.message}
@@ -227,6 +299,13 @@ defmodule FlowmindWeb.ChatLive do
                 Your browser does not support the audio element.
               </audio>
             </div>
+            <div :if={chat.message_type == "video"} class="chat-bubble">
+              <video controls class="w-64 h-auto md:w-80 lg:w-96 rounded-lg shadow-md">
+                <source src={chat.message} type="video/mp4" />
+                Your browser does not support the video element.
+              </video>
+              <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
+            </div>
             <div class="chat-footer opacity-50">Delivered</div>
           </div>
         <% end %>
@@ -237,20 +316,40 @@ defmodule FlowmindWeb.ChatLive do
           for={@form}
           id="chat-form"
           phx-submit="send"
-          class="grid grid-cols-[80%_20%] gap-2 w-full mt-0"
+          phx-change="validate"
+          class="grid grid-cols-[85%_15%] gap-2 w-full mt-0"
         >
-          <.input
-            phx-hook="FocusOnInputText"
-            field={@form[:message]}
-            type="text"
-            placeholder="Type a message..."
-            class="w-full  border border-gray-500 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500"
-          />
+          <div class="relative h-12">
+            <.input
+              phx-hook="FocusOnInputText"
+              field={@form[:message]}
+              type="text"
+              placeholder="Type a message..."
+              class="w-full border border-gray-500 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500 pr-8"
+            />
+
+            <.live_file_input upload={@uploads.avatar} class="hidden" />
+            
+            <div :for={entry <- @uploads.avatar.entries} class="absolute cursor-pointer left-10 top-0 transform -translate-y-1/2 text-white">
+              <.badge color="neutral" class="p-3">
+                <.icon name="hero-document-check" class="text-xs"/>
+                {entry.client_name}
+              </.badge>
+            </div>
+
+            <label
+              for="file-upload"
+              class="absolute cursor-pointer left-3 top-0 transform -translate-y-1/2 text-white"
+              phx-click={JS.dispatch("click", to: "##{@uploads.avatar.ref}")}
+            >
+              <.icon name="hero-paper-clip" />
+            </label>
+          </div>
 
           <:actions>
             <.button
               phx-disable-with="sending..."
-              class="w-full mt-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 transition duration-300"
+              class="w-full mt-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 transition duration-300 "
             >
               <.icon name="hero-paper-airplane" />
             </.button>
