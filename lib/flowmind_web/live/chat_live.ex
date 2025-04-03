@@ -133,6 +133,31 @@ defmodule FlowmindWeb.ChatLive do
     IO.inspect(chat_entry_form, label: "chat_entry_form")
     {:noreply, socket}
   end
+  
+  @impl true
+  def handle_event("remove_doc_handler", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :avatar, ref)}
+  end
+
+  @impl true
+  def handle_event("upload_handler", entry_form, socket) do
+    IO.inspect(entry_form, label: "upload_handler")
+
+    accept =
+      case entry_form do
+        %{"filetype" => "image"} -> ~w(.jpg .jpeg .png)
+        %{"filetype" => "audio"} -> ~w(.wav .mp3)
+        %{"filetype" => "video"} -> ~w(.mp4)
+        %{"filetype" => "document"} -> ~w(.pdf)
+      end
+
+    socket =
+      socket
+      |> allow_upload(:avatar, accept: accept, max_entries: 2)
+      |> push_event("fire_file_chooser", %{value: 1})
+
+    {:noreply, socket}
+  end
 
   @impl true
   def handle_info({:message_created, message}, socket) do
@@ -261,7 +286,7 @@ defmodule FlowmindWeb.ChatLive do
     <div class="flex flex-col h-[90vh]">
       <div class="w-[65%]  overflow-y-auto" id="chat-messages" phx-hook="ScrolltoBottom">
         <%= for chat <- @chat_history do %>
-          <% chat_css = if chat.source == :user, do: 'chat-start', else: 'chat-end'
+          <% chat_css = if chat.source == :user, do: "chat-start", else: "chat-end"
           face = if chat.source == :user, do: "face1", else: "face2" %>
           <div class={"chat m-5 #{chat_css}"}>
             <div class="chat-image avatar">
@@ -328,22 +353,66 @@ defmodule FlowmindWeb.ChatLive do
               class="w-full border border-gray-500 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500 pr-8"
             />
 
-            <.live_file_input upload={@uploads.avatar} class="hidden" />
-            
+            <.live_file_input upload={@uploads.avatar} class="hidden live_file_input" />
+
             <div :for={entry <- @uploads.avatar.entries} class="absolute cursor-pointer left-10 top-0 transform -translate-y-1/2 text-white">
               <.badge color="neutral" class="p-3">
                 <.icon name="hero-document-check" class="text-xs"/>
-                {entry.client_name}
+                {entry.client_name} 
+                <div id="close-doc-id" phx-click="remove_doc_handler" phx-value-ref={entry.ref} >
+                  <.icon name="hero-x-mark" class="text-xs"/>
+                </div>
               </.badge>
             </div>
 
-            <label
-              for="file-upload"
-              class="absolute cursor-pointer left-3 top-0 transform -translate-y-1/2 text-white"
-              phx-click={JS.dispatch("click", to: "##{@uploads.avatar.ref}")}
-            >
-              <.icon name="hero-paper-clip" />
-            </label>
+            <.dropdown direction="top" class="absolute cursor-pointer left-3 top-0 transform -translate-y-1/2 ">
+              <div id="clip-id" tabindex="0" class="text-white m-1" phx-hook="FileChooser"  >
+                <.icon name="hero-paper-clip" />
+              </div>
+              <.menu tabindex="0" class="dropdown-content">
+                <:item>
+                  <label
+                    id="image-label-id"
+                    for="file-upload"
+                    phx-click="upload_handler"
+                    phx-value-filetype="image"
+                  >
+                    <.icon name="hero-camera" />
+                  </label>
+                </:item>
+                <:item>
+                  <label
+                    id="audio-label-id"
+                    for="file-upload"
+                    phx-click="upload_handler"
+                    phx-value-filetype="audio"
+                  >
+                    <.icon name="hero-microphone" />
+                  </label>
+                </:item>
+                <:item>
+                  <label
+                    id="video-label-id"
+                    for="file-upload"
+                    phx-click="upload_handler"
+                    phx-value-filetype="video"
+                  >
+                    <.icon name="hero-video-camera" />
+                  </label>
+                </:item>
+                <:item>
+                  <label
+                    id="document-label-id"
+                    for="file-upload"
+                    phx-click="upload_handler"
+                    phx-value-filetype="document"
+                  >
+                    <.icon name="hero-document" />
+                  </label>
+                </:item>
+              </.menu>
+            </.dropdown>
+
           </div>
 
           <:actions>

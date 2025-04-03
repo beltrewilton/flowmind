@@ -24,11 +24,13 @@ import topbar from "../vendor/topbar"
 import PartnerMetaLogin from "./partnermeta"
 import ScrolltoBottom from "./scrolltobottom"
 import FocusOnInputText from "./focus_on_send"
+import FileChooser from "./dispatch_file_chooser"
 
 let hooks = {}
 hooks.PartnerMetaLogin = PartnerMetaLogin
 hooks.ScrolltoBottom = ScrolltoBottom
 hooks.FocusOnInputText = FocusOnInputText
+hooks.FileChooser = FileChooser
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
