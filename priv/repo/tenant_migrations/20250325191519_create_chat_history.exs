@@ -11,6 +11,7 @@ defmodule Flowmind.Repo.Migrations.CreateChatHistory do
       add :source, :string
       add :message_type, :string
       add :caption, :string
+      add :delivered, :boolean, default: false, null: false
       add :readed, :boolean, default: false, null: false
       add :collected, :boolean, default: false, null: false
 
@@ -19,5 +20,6 @@ defmodule Flowmind.Repo.Migrations.CreateChatHistory do
     
     create index(:chat_history, [:phone_number_id])
     create index(:chat_history, [:sender_phone_number])
+    create index(:chat_history, [:whatsapp_id])
   end
 end

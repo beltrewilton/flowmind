@@ -12,6 +12,7 @@ defmodule Flowmind.Chat.ChatHistory do
     field :sender_phone_number, :string
     field :message_type, :string, default: "text"
     field :caption, :string
+    field :delivered, :boolean, default: false
     field :readed, :boolean, default: false
     field :collected, :boolean, default: false
 
@@ -27,6 +28,7 @@ defmodule Flowmind.Chat.ChatHistory do
       :sender_phone_number,
       :message,
       :source,
+      :delivered,
       :readed,
       :message_type,
       :caption,

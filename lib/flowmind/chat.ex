@@ -95,6 +95,42 @@ defmodule Flowmind.Chat do
     |> Repo.update(prefix: tenant)
   end
 
+  def mark_as_readed_or_delivered(sender_phone_number, action \\ :delivered) do
+    tenant = Flowmind.TenantGenServer.get_tenant()
+
+    subquery =
+      from(ch in ChatHistory,
+        where: ch.sender_phone_number == ^sender_phone_number,
+        select: max(ch.inserted_at)
+      )
+
+    max_date = Repo.one(subquery, prefix: tenant)
+
+    query =
+      from(ch in ChatHistory,
+        where: ch.sender_phone_number == ^sender_phone_number and ch.inserted_at == ^max_date
+      )
+
+    if action == :delivered do
+      Repo.update_all(
+        query,
+        [set: [delivered: true]],
+        prefix: tenant
+      )
+    else
+      Repo.update_all(
+        query,
+        [set: [readed: true]],
+        prefix: tenant
+      )
+    end
+
+    {:ok,
+     Repo.get_by(ChatHistory, [inserted_at: max_date, sender_phone_number: sender_phone_number],
+       prefix: tenant
+     )}
+  end
+
   @doc """
   Deletes a chat_history.
 

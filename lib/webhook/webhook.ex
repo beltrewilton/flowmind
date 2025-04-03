@@ -106,11 +106,33 @@ defmodule Webhook.Router do
   def handle_notification(%Whatsapp.Meta.Request{} = data, rawdata, tenant) do
     sender = data.meta_request
     waba_id = Keyword.get(sender, :waba_id)
+    sender_phone_number = Keyword.get(sender, :sender_phone_number)
+    status = Keyword.get(sender, :status)
+
+    IO.inspect(data.meta_request, label: "meta_request")
+
+    case status do
+      "read" ->
+        wa_message_id = Keyword.get(sender, :wa_message_id)
+
+        ChatPubsub.subscribe(sender_phone_number)
+
+        Chat.mark_as_readed_or_delivered(sender_phone_number, :readed)
+        |> ChatPubsub.notify(:notify_message_readed, sender_phone_number)
+
+      "delivered" ->
+        wa_message_id = Keyword.get(sender, :wa_message_id)
+
+        ChatPubsub.subscribe(sender_phone_number)
+
+        Chat.mark_as_readed_or_delivered(sender_phone_number, :delivered)
+        |> ChatPubsub.notify(:notify_message_delivered, sender_phone_number)
+
+      _ ->
+        :ok
+    end
 
     log_notification(rawdata, waba_id)
-
-    IO.puts("No redirect for this content .. !")
-    IO.inspect(data)
   end
 
   def handle_notification(_, _) do

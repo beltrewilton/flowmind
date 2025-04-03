@@ -133,7 +133,7 @@ defmodule FlowmindWeb.ChatLive do
     IO.inspect(chat_entry_form, label: "chat_entry_form")
     {:noreply, socket}
   end
-  
+
   @impl true
   def handle_event("remove_doc_handler", %{"ref" => ref}, socket) do
     {:noreply, cancel_upload(socket, :avatar, ref)}
@@ -168,6 +168,35 @@ defmodule FlowmindWeb.ChatLive do
       socket
       |> assign(chat_history: chat_history)
       |> push_event("scrolldown", %{value: 1})
+
+    {:noreply, socket}
+  end
+  
+  @impl true
+  def handle_info({:notify_message_delivered, message}, socket) do
+    chat_history = socket.assigns.chat_history
+
+    chat_history = List.update_at(chat_history, -1, fn _ -> message end)
+
+    socket =
+      socket
+      |> assign(chat_history: chat_history)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:notify_message_readed, message}, socket) do
+    IO.inspect(message, label: "notify_message_readed")
+
+    chat_history = socket.assigns.chat_history
+
+    chat_history = List.update_at(chat_history, -1, fn _ -> message end)
+
+    socket =
+      socket
+      |> assign(chat_history: chat_history)
+      # |> push_event("scrolldown", %{value: 1})
 
     {:noreply, socket}
   end
@@ -284,7 +313,7 @@ defmodule FlowmindWeb.ChatLive do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col h-[90vh]">
-      <div class="w-[65%]  overflow-y-auto" id="chat-messages" phx-hook="ScrolltoBottom">
+      <div class="w-[100%]  overflow-y-auto" id="chat-messages" phx-hook="ScrolltoBottom">
         <%= for chat <- @chat_history do %>
           <% chat_css = if chat.source == :user, do: "chat-start", else: "chat-end"
           face = if chat.source == :user, do: "face1", else: "face2" %>
@@ -331,12 +360,19 @@ defmodule FlowmindWeb.ChatLive do
               </video>
               <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
             </div>
-            <div class="chat-footer opacity-50">Delivered</div>
+            <div class="chat-footer opacity-50">
+              <div :if={chat.readed and chat.delivered}>
+                <.icon name="hero-check" class="h-5 w-5 text-green-600" />
+                <.icon name="hero-check" class="h-5 w-5 text-green-600 -ml-5" />
+              </div>
+              <.icon :if={!chat.readed and chat.delivered} name="hero-check" class="h-5 w-5 text-green-600" />
+              <.icon :if={!chat.readed and !chat.delivered} name="hero-check" class="h-5 w-5 text-gray-500" />
+            </div>
           </div>
         <% end %>
       </div>
 
-      <div class="flex w-[65%] bg-gray-700 p-4 rounded-lg shadow-lg">
+      <div class="flex w-[100%] bg-gray-700 p-4 rounded-lg shadow-lg">
         <.simple_form
           for={@form}
           id="chat-form"
@@ -358,7 +394,7 @@ defmodule FlowmindWeb.ChatLive do
             <div :for={entry <- @uploads.avatar.entries} class="absolute cursor-pointer left-10 top-0 transform -translate-y-1/2 text-white">
               <.badge color="neutral" class="p-3">
                 <.icon name="hero-document-check" class="text-xs"/>
-                {entry.client_name} 
+                {entry.client_name}
                 <div id="close-doc-id" phx-click="remove_doc_handler" phx-value-ref={entry.ref} >
                   <.icon name="hero-x-mark" class="text-xs"/>
                 </div>
