@@ -6,6 +6,7 @@ defmodule Flowmind.Repo.Migrations.CreateChatHistory do
       add :id, :binary_id, primary_key: true
       add :phone_number_id, :string
       add :whatsapp_id, :string
+      add :ref_whatsapp_id, :string
       add :sender_phone_number, :string
       add :message, :text
       add :source, :string
@@ -21,5 +22,6 @@ defmodule Flowmind.Repo.Migrations.CreateChatHistory do
     create index(:chat_history, [:phone_number_id])
     create index(:chat_history, [:sender_phone_number])
     create index(:chat_history, [:whatsapp_id])
+    create index(:chat_history, [:ref_whatsapp_id])
   end
 end

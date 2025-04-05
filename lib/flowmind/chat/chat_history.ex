@@ -9,12 +9,18 @@ defmodule Flowmind.Chat.ChatHistory do
     field :source, Ecto.Enum, values: [:user, :ai, :agent], default: :user
     field :phone_number_id, :string
     field :whatsapp_id, :string
+    # field :ref_whatsapp_id, :string
     field :sender_phone_number, :string
     field :message_type, :string, default: "text"
     field :caption, :string
     field :delivered, :boolean, default: false
     field :readed, :boolean, default: false
     field :collected, :boolean, default: false
+
+    belongs_to :chat_history, Flowmind.Chat.ChatHistory,
+      foreign_key: :ref_whatsapp_id,
+      references: :whatsapp_id,
+      type: :string
 
     timestamps(type: :utc_datetime)
   end
@@ -25,6 +31,7 @@ defmodule Flowmind.Chat.ChatHistory do
     |> cast(attrs, [
       :phone_number_id,
       :whatsapp_id,
+      :ref_whatsapp_id,
       :sender_phone_number,
       :message,
       :source,

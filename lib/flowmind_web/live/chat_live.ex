@@ -61,14 +61,14 @@ defmodule FlowmindWeb.ChatLive do
         {:ok, "#{File.cwd!()}/priv/static/images/uploads/#{Path.basename(dest)}"}
       end)
 
-    whatsapp_id =
+    ref_whatsapp_id =
       cond do
         socket.assigns[:chat_pinned] != nil ->
-          IO.inspect(socket.assigns.chat_pinned.whatsapp_id, label: "whatsapp_id")
+          IO.inspect(socket.assigns.chat_pinned.whatsapp_id, label: "ref_whatsapp_id")
           socket.assigns.chat_pinned.whatsapp_id
 
         true ->
-          IO.inspect("== nil", label: "whatsapp_id")
+          IO.inspect("== nil", label: "ref_whatsapp_id")
           nil
       end
 
@@ -81,7 +81,7 @@ defmodule FlowmindWeb.ChatLive do
               phone_number_id,
               chat_entry_form["message"],
               WhatsappElixir.Messages.get_config(),
-              whatsapp_id
+              ref_whatsapp_id
             )
 
           {"text", response}
@@ -127,6 +127,7 @@ defmodule FlowmindWeb.ChatLive do
       |> Map.put("source", :agent)
       |> Map.put("sender_phone_number", sender_phone_number)
       |> Map.put("whatsapp_id", whatsapp_id)
+      |> Map.put("ref_whatsapp_id", ref_whatsapp_id)
 
     chat_entry_form =
       if length(uploaded_files) > 0 do
@@ -218,8 +219,13 @@ defmodule FlowmindWeb.ChatLive do
 
   @impl true
   def handle_info({:message_created, message}, socket) do
-    IO.inspect("No acredito!", label: "WOW")
+    IO.inspect(message, label: "message")
     chat_history = socket.assigns.chat_history ++ [message]
+
+    IO.inspect(message, label: "mira -> message")
+    IO.inspect(message.chat_history, label: "mira -> message.chat_history")
+    IO.inspect(is_struct(message.chat_history), label: "mira -> is_struct")
+    IO.inspect(chat_history, label: "mira -> chat_history")
 
     socket =
       socket
@@ -307,6 +313,8 @@ defmodule FlowmindWeb.ChatLive do
 
     chat_history = Chat.list_chat_history(sender_phone_number)
 
+    IO.inspect(chat_history, label: "chat_history")
+
     was_readed = if is_nil(inbox), do: true, else: inbox.readed
 
     chat_inbox =
@@ -386,8 +394,8 @@ defmodule FlowmindWeb.ChatLive do
               <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
             </div>
             <div :if={chat.message_type == "text"} class="chat-bubble relative">
-              <div :if={false} class="chat-bubble border-l-4 border-l-blue-500 shadow">
-                a book or other written or printed work, regarded in terms of its content rather than its physical form.
+              <div :if={is_struct(chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+                {chat.chat_history.message}
               </div>
               <div class="mr-5">{chat.message}</div>
               <.dropdown direction="bottom" class="absolute cursor-pointer text-gray-400 top-0 right-0">

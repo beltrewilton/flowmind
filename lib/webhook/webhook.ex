@@ -63,6 +63,7 @@ defmodule Webhook.Router do
     wa_message_id = Keyword.get(sender, :wa_message_id)
     message_type = Keyword.get(sender, :message_type)
     image_caption = Keyword.get(sender, :image_caption)
+    ref_whatsapp_id = Keyword.get(sender, :ref_whatsapp_id)
     # flow = Keyword.get(sender, :flow)
     # image_id = Keyword.get(sender, :image_id)
     # audio_id = Keyword.get(sender, :audio_id)
@@ -83,6 +84,7 @@ defmodule Webhook.Router do
       "phone_number_id" => phone_number_id,
       "sender_phone_number" => sender_phone_number,
       "whatsapp_id" => wa_message_id,
+      "ref_whatsapp_id" => ref_whatsapp_id,
       "message_type" => message_type,
       "caption" => image_caption
     }

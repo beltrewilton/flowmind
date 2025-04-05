@@ -32,7 +32,7 @@ defmodule Flowmind.Chat do
 
     case Repo.all(chat_history, prefix: tenant) do
       [] -> []
-      chat_histories -> chat_histories
+      chat_histories -> chat_histories |> Repo.preload([:chat_history])
     end
   end
 
@@ -70,9 +70,12 @@ defmodule Flowmind.Chat do
   def create_chat_history(attrs \\ %{}) do
     tenant = Flowmind.TenantGenServer.get_tenant()
 
-    %ChatHistory{}
+    changeset = %ChatHistory{}
     |> ChatHistory.changeset(attrs)
-    |> Repo.insert(prefix: tenant)
+
+    with {:ok, entity} <- Repo.insert(changeset, prefix: tenant) do
+      {:ok, Repo.preload(entity, [:chat_history])}
+    end
   end
 
   @doc """
@@ -120,7 +123,8 @@ defmodule Flowmind.Chat do
     {:ok,
      Repo.get_by(ChatHistory, [whatsapp_id: whatsapp_id],
        prefix: tenant
-     )}
+     ) |> Repo.preload([:chat_history])
+    }
   end
 
   @doc """
