@@ -113,19 +113,19 @@ defmodule Webhook.Router do
 
     case status do
       "read" ->
-        wa_message_id = Keyword.get(sender, :wa_message_id)
+        whatsapp_id = Keyword.get(sender, :wa_message_id)
 
         ChatPubsub.subscribe(sender_phone_number)
 
-        Chat.mark_as_readed_or_delivered(sender_phone_number, :readed)
+        Chat.mark_as_readed_or_delivered(whatsapp_id, :readed)
         |> ChatPubsub.notify(:notify_message_readed, sender_phone_number)
 
       "delivered" ->
-        wa_message_id = Keyword.get(sender, :wa_message_id)
+        whatsapp_id = Keyword.get(sender, :wa_message_id)
 
         ChatPubsub.subscribe(sender_phone_number)
 
-        Chat.mark_as_readed_or_delivered(sender_phone_number, :delivered)
+        Chat.mark_as_readed_or_delivered(whatsapp_id, :delivered)
         |> ChatPubsub.notify(:notify_message_delivered, sender_phone_number)
 
       _ ->

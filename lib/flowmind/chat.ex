@@ -95,20 +95,12 @@ defmodule Flowmind.Chat do
     |> Repo.update(prefix: tenant)
   end
 
-  def mark_as_readed_or_delivered(sender_phone_number, action \\ :delivered) do
+  def mark_as_readed_or_delivered(whatsapp_id, action \\ :delivered) do
     tenant = Flowmind.TenantGenServer.get_tenant()
-
-    subquery =
-      from(ch in ChatHistory,
-        where: ch.sender_phone_number == ^sender_phone_number,
-        select: max(ch.inserted_at)
-      )
-
-    max_date = Repo.one(subquery, prefix: tenant)
 
     query =
       from(ch in ChatHistory,
-        where: ch.sender_phone_number == ^sender_phone_number and ch.inserted_at == ^max_date
+        where: ch.whatsapp_id == ^whatsapp_id
       )
 
     if action == :delivered do
@@ -126,7 +118,7 @@ defmodule Flowmind.Chat do
     end
 
     {:ok,
-     Repo.get_by(ChatHistory, [inserted_at: max_date, sender_phone_number: sender_phone_number],
+     Repo.get_by(ChatHistory, [whatsapp_id: whatsapp_id],
        prefix: tenant
      )}
   end

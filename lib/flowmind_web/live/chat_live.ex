@@ -30,6 +30,7 @@ defmodule FlowmindWeb.ChatLive do
       socket
       |> assign(:chat_history, [])
       |> assign(:chat_inbox, chat_inbox)
+      |> assign(:chat_pinned, nil)
       |> assign(:tenant, tenant)
       |> assign(:tenant_accounts, [])
       |> assign(:phone_number_id, phone_number_id)
@@ -60,19 +61,30 @@ defmodule FlowmindWeb.ChatLive do
         {:ok, "#{File.cwd!()}/priv/static/images/uploads/#{Path.basename(dest)}"}
       end)
 
-    IO.inspect(uploaded_files, label: "uploaded_files")
+    whatsapp_id =
+      cond do
+        socket.assigns[:chat_pinned] != nil ->
+          IO.inspect(socket.assigns.chat_pinned.whatsapp_id, label: "whatsapp_id")
+          socket.assigns.chat_pinned.whatsapp_id
 
-    message_type =
+        true ->
+          IO.inspect("== nil", label: "whatsapp_id")
+          nil
+      end
+
+    {message_type, response} =
       case uploaded_files do
         [] ->
-          WhatsappElixir.Messages.send_message(
-            sender_phone_number,
-            phone_number_id,
-            chat_entry_form["message"],
-            WhatsappElixir.Messages.get_config()
-          )
+          {_, response} =
+            WhatsappElixir.Messages.send_message(
+              sender_phone_number,
+              phone_number_id,
+              chat_entry_form["message"],
+              WhatsappElixir.Messages.get_config(),
+              whatsapp_id
+            )
 
-          "text"
+          {"text", response}
 
         # TODO: must be a lot of files.
         filenames ->
@@ -93,22 +105,28 @@ defmodule FlowmindWeb.ChatLive do
           IO.inspect(media_id, label: "media_id")
           IO.inspect(media_type, label: "media_type")
 
-          WhatsappElixir.Messages.send_media_message(
-            sender_phone_number,
-            phone_number_id,
-            media_id,
-            media_type,
-            WhatsappElixir.Messages.get_config(),
-            chat_entry_form["message"]
-          )
+          {_, response} =
+            WhatsappElixir.Messages.send_media_message(
+              sender_phone_number,
+              phone_number_id,
+              media_id,
+              media_type,
+              WhatsappElixir.Messages.get_config(),
+              chat_entry_form["message"]
+            )
 
-          media_type
+          {media_type, response}
       end
+
+    IO.inspect(response, label: "response")
+
+    whatsapp_id = WhatsappElixir.Static.get_response_message_id(response)
 
     chat_entry_form =
       chat_entry_form
       |> Map.put("source", :agent)
       |> Map.put("sender_phone_number", sender_phone_number)
+      |> Map.put("whatsapp_id", whatsapp_id)
 
     chat_entry_form =
       if length(uploaded_files) > 0 do
@@ -125,6 +143,10 @@ defmodule FlowmindWeb.ChatLive do
     Chat.create_chat_history(chat_entry_form)
     |> ChatPubsub.notify(:message_created, sender_phone_number)
 
+    socket =
+      socket
+      |> assign(:chat_pinned, nil)
+
     {:noreply, socket}
   end
 
@@ -135,7 +157,42 @@ defmodule FlowmindWeb.ChatLive do
   end
 
   @impl true
+  def handle_event("handle_repply", chat_entry_form, socket) do
+    chat_history = socket.assigns.chat_history
+    whatsapp_id = Map.get(chat_entry_form, "whatsapp_id")
+
+    chat_pinned =
+      Enum.find(chat_history, fn chat ->
+        chat.whatsapp_id == whatsapp_id
+      end)
+
+    IO.inspect(chat_pinned, label: "chat_pinned")
+
+    socket =
+      socket
+      |> assign(:chat_pinned, chat_pinned)
+      |> push_event("scrolldown", %{value: 1})
+      |> push_event("focus_on_input_text", %{value: 1})
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("remove_chat_pinned", chat_entry_form, socket) do
+    socket =
+      socket
+      |> assign(:chat_pinned, nil)
+      |> push_event("focus_on_input_text", %{value: 1})
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("remove_doc_handler", %{"ref" => ref}, socket) do
+    socket =
+      socket
+      |> push_event("focus_on_input_text", %{value: 1})
+
     {:noreply, cancel_upload(socket, :avatar, ref)}
   end
 
@@ -171,7 +228,7 @@ defmodule FlowmindWeb.ChatLive do
 
     {:noreply, socket}
   end
-  
+
   @impl true
   def handle_info({:notify_message_delivered, message}, socket) do
     chat_history = socket.assigns.chat_history
@@ -196,7 +253,8 @@ defmodule FlowmindWeb.ChatLive do
     socket =
       socket
       |> assign(chat_history: chat_history)
-      # |> push_event("scrolldown", %{value: 1})
+
+    # |> push_event("scrolldown", %{value: 1})
 
     {:noreply, socket}
   end
@@ -327,7 +385,29 @@ defmodule FlowmindWeb.ChatLive do
               {chat.sender_phone_number}
               <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
             </div>
-            <div :if={chat.message_type == "text"} class="chat-bubble">{chat.message}</div>
+            <div :if={chat.message_type == "text"} class="chat-bubble relative">
+              <div :if={false} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+                a book or other written or printed work, regarded in terms of its content rather than its physical form.
+              </div>
+              <div class="mr-5">{chat.message}</div>
+              <.dropdown direction="bottom" class="absolute cursor-pointer text-gray-400 top-0 right-0">
+                <.swap animation="rotate" id={"reply-#{chat.id}"} >
+                  <:swap_off type="icon" name="hero-ellipsis-vertical" />
+                  <:swap_on type="icon" name="hero-chevron-down" />
+                </.swap>
+                <.menu tabindex="0" class="dropdown-content">
+                  <:item>
+                    <label
+                      id={chat.id}
+                      phx-click="handle_repply"
+                      phx-value-whatsapp_id={chat.whatsapp_id}
+                    >
+                    reply
+                    </label>
+                  </:item>
+                </.menu>
+              </.dropdown>
+            </div>
             <div :if={chat.message_type == "application"} class="chat-bubble">
               <.icon name="hero-document-text" /> {chat.message}
             </div>
@@ -360,7 +440,7 @@ defmodule FlowmindWeb.ChatLive do
               </video>
               <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
             </div>
-            <div class="chat-footer opacity-50">
+            <div :if={chat.source != :user}class="chat-footer opacity-50">
               <div :if={chat.readed and chat.delivered}>
                 <.icon name="hero-check" class="h-5 w-5 text-green-600" />
                 <.icon name="hero-check" class="h-5 w-5 text-green-600 -ml-5" />
@@ -372,7 +452,15 @@ defmodule FlowmindWeb.ChatLive do
         <% end %>
       </div>
 
-      <div class="flex w-[100%] bg-gray-700 p-4 rounded-lg shadow-lg">
+      <div class="flex flex-col w-[100%] bg-gray-700 p-4 rounded-lg shadow-lg">
+        <div :if={@chat_pinned} class="chat chat-start mb-3 ml-12">
+          <div class="flex flex-row chat-bubble border-r-4 border-blue-500">
+            {@chat_pinned.message}
+            <div phx-click="remove_chat_pinned" >
+              <.icon name="hero-x-mark" class="text-xs cursor-pointer" />
+            </div>
+          </div>
+        </div>
         <.simple_form
           for={@form}
           id="chat-form"
