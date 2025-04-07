@@ -393,62 +393,13 @@ defmodule FlowmindWeb.ChatLive do
               {chat.sender_phone_number}
               <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
             </div>
-            <div :if={chat.message_type == "text"} class="chat-bubble relative">
-              <div :if={is_struct(chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
-                {chat.chat_history.message}
-              </div>
-              <div class="mr-5">{chat.message}</div>
-              <.dropdown direction="bottom" class="absolute cursor-pointer text-gray-400 top-0 right-0">
-                <.swap animation="rotate" id={"reply-#{chat.id}"} >
-                  <:swap_off type="icon" name="hero-ellipsis-vertical" />
-                  <:swap_on type="icon" name="hero-chevron-down" />
-                </.swap>
-                <.menu tabindex="0" class="dropdown-content">
-                  <:item>
-                    <label
-                      id={chat.id}
-                      phx-click="handle_repply"
-                      phx-value-whatsapp_id={chat.whatsapp_id}
-                    >
-                    reply
-                    </label>
-                  </:item>
-                </.menu>
-              </.dropdown>
-            </div>
-            <div :if={chat.message_type == "application"} class="chat-bubble">
-              <.icon name="hero-document-text" /> {chat.message}
-            </div>
-            <div :if={chat.message_type == "image"} class="chat-bubble">
-              <img
-                src={chat.message}
-                alt=""
-                class="max-w-xs md:max-w-sm lg:max-w-md w-auto h-auto rounded-lg shadow-md object-cover"
-              />
-              <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
-            </div>
-            <div :if={chat.message_type == "sticker"} class="chat-bubble">
-              <img
-                src={chat.message}
-                alt=""
-                class="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md shadow-sm object-cover"
-              />
-              <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
-            </div>
-            <div :if={chat.message_type == "audio"} class="chat-bubble">
-              <audio controls class="appearance-none bg-transparent">
-                <source src={chat.message} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-            </div>
-            <div :if={chat.message_type == "video"} class="chat-bubble">
-              <video controls class="w-64 h-auto md:w-80 lg:w-96 rounded-lg shadow-md">
-                <source src={chat.message} type="video/mp4" />
-                Your browser does not support the video element.
-              </video>
-              <span :if={!is_nil(chat.caption)} class=" text-sm py-1 rounded-lg">{chat.caption}</span>
-            </div>
-            <div :if={chat.source != :user}class="chat-footer opacity-50">
+            
+            <.live_component
+              module={FlowmindWeb.ChatBubbleContent}
+              id={"live-component-#{chat.id}"}
+              chat={chat} />
+            
+            <div :if={chat.source != :user} class="chat-footer opacity-50">
               <div :if={chat.readed and chat.delivered}>
                 <.icon name="hero-check" class="h-5 w-5 text-green-600" />
                 <.icon name="hero-check" class="h-5 w-5 text-green-600 -ml-5" />
@@ -463,7 +414,38 @@ defmodule FlowmindWeb.ChatLive do
       <div class="flex flex-col w-[100%] bg-gray-700 p-4 rounded-lg shadow-lg">
         <div :if={@chat_pinned} class="chat chat-start mb-3 ml-12">
           <div class="flex flex-row chat-bubble border-r-4 border-blue-500">
-            {@chat_pinned.message}
+            <div :if={@chat_pinned.message_type == "text"} >
+              {@chat_pinned.message}
+            </div>
+            <div :if={@chat_pinned.message_type == "application"} >
+              <.icon name="hero-document-text" /> {@chat_pinned.message}
+            </div>
+            <div :if={@chat_pinned.message_type == "image"} >
+              <img
+                src={@chat_pinned.message}
+                alt=""
+                class="w-24 h-24 object-cover rounded-md shadow-sm"
+              />
+            </div>
+            <div :if={@chat_pinned.message_type == "sticker"} >
+              <img
+                src={@chat_pinned.message}
+                alt=""
+                class="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-cover rounded-md shadow-sm"
+              />
+            </div>
+            <div :if={@chat_pinned.message_type == "audio"} >
+              <audio controls class="appearance-none bg-transparent">
+                <source src={@chat_pinned.message} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+            <div :if={@chat_pinned.message_type == "video"} >
+              <video controls <video controls class="w-32 h-20 md:w-40 md:h-24 lg:w-48 lg:h-28 rounded-md shadow-sm object-cover">
+                <source src={@chat_pinned.message} type="video/mp4" />
+                Your browser does not support the video element.
+              </video>
+            </div>
             <div phx-click="remove_chat_pinned" >
               <.icon name="hero-x-mark" class="text-xs cursor-pointer" />
             </div>
@@ -478,6 +460,7 @@ defmodule FlowmindWeb.ChatLive do
         >
           <div class="relative h-12">
             <.input
+              id="chat-input"
               phx-hook="FocusOnInputText"
               field={@form[:message]}
               type="text"
@@ -549,8 +532,10 @@ defmodule FlowmindWeb.ChatLive do
 
           <:actions>
             <.button
+              id="send-button-id"
               phx-disable-with="sending..."
-              class="w-full mt-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 transition duration-300 "
+              phx-click={JS.set_attribute({"value", ""}, to: "#chat-input")}
+              class="w-full mt-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 transition duration-300"
             >
               <.icon name="hero-paper-airplane" />
             </.button>
