@@ -8,7 +8,8 @@ defmodule FlowmindWeb.ChatThumbnail do
         {@chat.message}
       </div>
       <div :if={@chat.message_type == "application"} >
-        <.icon name="hero-document-text" /> {@chat.message}
+        <canvas id="the-canvas-2" phx-hook="PdfPreview" data-docurl={@chat.message} data-scale={0.2}></canvas>
+        <.icon name="hero-document-text" /> {Path.basename(@chat.message)}
       </div>
       <div :if={@chat.message_type == "image"} >
         <img

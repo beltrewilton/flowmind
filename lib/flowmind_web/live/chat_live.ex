@@ -414,38 +414,10 @@ defmodule FlowmindWeb.ChatLive do
       <div class="flex flex-col w-[100%] bg-gray-700 p-4 rounded-lg shadow-lg">
         <div :if={@chat_pinned} class="chat chat-start mb-3 ml-12">
           <div class="flex flex-row chat-bubble border-r-4 border-blue-500">
-            <div :if={@chat_pinned.message_type == "text"} >
-              {@chat_pinned.message}
-            </div>
-            <div :if={@chat_pinned.message_type == "application"} >
-              <.icon name="hero-document-text" /> {@chat_pinned.message}
-            </div>
-            <div :if={@chat_pinned.message_type == "image"} >
-              <img
-                src={@chat_pinned.message}
-                alt=""
-                class="w-24 h-24 object-cover rounded-md shadow-sm"
-              />
-            </div>
-            <div :if={@chat_pinned.message_type == "sticker"} >
-              <img
-                src={@chat_pinned.message}
-                alt=""
-                class="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-cover rounded-md shadow-sm"
-              />
-            </div>
-            <div :if={@chat_pinned.message_type == "audio"} >
-              <audio controls class="appearance-none bg-transparent">
-                <source src={@chat_pinned.message} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-            </div>
-            <div :if={@chat_pinned.message_type == "video"} >
-              <video controls <video controls class="w-32 h-20 md:w-40 md:h-24 lg:w-48 lg:h-28 rounded-md shadow-sm object-cover">
-                <source src={@chat_pinned.message} type="video/mp4" />
-                Your browser does not support the video element.
-              </video>
-            </div>
+          <.live_component
+            module={FlowmindWeb.ChatThumbnail}
+            id={"pi-app-live-component-#{@chat_pinned.id}"}
+            chat={@chat_pinned} />
             <div phx-click="remove_chat_pinned" >
               <.icon name="hero-x-mark" class="text-xs cursor-pointer" />
             </div>

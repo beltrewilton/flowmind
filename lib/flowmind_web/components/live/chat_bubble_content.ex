@@ -26,7 +26,8 @@ defmodule FlowmindWeb.ChatBubbleContent do
             id={"th-app-live-component-#{@chat.id}"}
             chat={@chat.chat_history} />
         </div>
-        <.icon name="hero-document-text" /> {@chat.message}
+        <canvas id="the-canvas-1" phx-hook="PdfPreview" data-docurl={@chat.message}></canvas>
+        <.icon name="hero-document-text" /> {Path.basename(@chat.message)}
         <.live_component
           module={FlowmindWeb.ChatDropdown}
           id={"dd-live-component-#{@chat.id}"}

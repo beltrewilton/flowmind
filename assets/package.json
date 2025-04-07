@@ -3,6 +3,6 @@
     "daisyui": "^5.0.9"
   },
   "dependencies": {
-    "pdfjs-dist": "^5.1.91"
+    "pdfjs-dist": "^3.8.162"
   }
 }

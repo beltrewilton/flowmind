@@ -4,6 +4,7 @@ defmodule FlowmindWeb.Router do
   import FlowmindWeb.UserAuth
 
   pipeline :browser do
+    plug Corsica, origins: "*", allow_credentials: true, allow_methods: :all, allow_headers: :all
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
