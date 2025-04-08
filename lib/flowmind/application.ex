@@ -19,7 +19,8 @@ defmodule Flowmind.Application do
       # Start to serve requests, typically the last entry
       FlowmindWeb.Endpoint,
       {Plug.Cowboy, scheme: :http, plug: Webhook.Router, options: [port: 7001]},
-      Flowmind.TenantGenServer
+      Flowmind.TenantGenServer,
+      CountryLookup
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -8,6 +8,13 @@
             <a phx-click="handle_edit_alias" class="btn btn-ghost text-xl flex flex-col items-start">
               {@alias_name}
               <.badge size="xs" class="-mt-2 -ml-1">
+                <div class="w-4 h-4">
+                  <img
+                    src={"data:image/png;base64,#{@country.flag_image}"}
+                    alt="flag"
+                    class="w-full h-full object-contain"
+                  />
+                </div>
                 {@sender_phone_number}
               </.badge>
             </a>

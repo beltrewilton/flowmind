@@ -40,6 +40,7 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:uploaded_files, [])
       |> assign(:edit_alias, false)
       |> assign(:alias_name, inbox.alias)
+      |> assign(:country, CountryLookup.lookup_by_code(sender_phone_number))
       |> allow_upload(:avatar, accept: ~w(.jpg .jpeg .png .wav .mp4 .pdf), max_entries: 2)
       |> assign_form(form_source)
       |> push_event("scrolldown", %{value: 1})

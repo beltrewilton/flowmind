@@ -33,6 +33,8 @@ defmodule Flowmind.MixProject do
   defp deps do
     # export WHATSAPPX_PATH=/Users/beltre.wilton/apps/whatsappx
     whatsappx_path = System.get_env("WHATSAPPX_PATH")
+    # country_lookup = System.get_env("COUNTRY_LOOKUP")
+    
     
     [
       {:argon2_elixir, "~> 3.0"},
@@ -66,7 +68,8 @@ defmodule Flowmind.MixProject do
       {:triplex, "~> 1.3.0"},
       {:corsica, "~> 2.1"},
       {:daisy_ui_components, "~> 0.8"},
-      {:whatsappx, path: whatsappx_path}
+      {:whatsappx, path: whatsappx_path},
+      {:country_lookup, "~> 0.0.1"}
     ]
   end
 
