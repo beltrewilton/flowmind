@@ -26,6 +26,7 @@ import ScrolltoBottom from "./scrolltobottom"
 import FocusOnInputText from "./focus_on_send"
 import FileChooser from "./dispatch_file_chooser"
 import ClearInput from "./pdf_preview"
+import EditAlias from "./edit_alias"
 
 let hooks = {}
 hooks.PartnerMetaLogin = PartnerMetaLogin
@@ -33,6 +34,7 @@ hooks.ScrolltoBottom = ScrolltoBottom
 hooks.FocusOnInputText = FocusOnInputText
 hooks.FileChooser = FileChooser
 hooks.PdfPreview = PdfPreview
+hooks.EditAlias = EditAlias
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {

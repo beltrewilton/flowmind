@@ -2,7 +2,21 @@
   <:drawer_content class="pb-10 b-1 bg-base-200">
     <.navbar class="bg-base-100 mb-1 shadow-xs">
       <div class="flex-1">
-        <a :if={@sender_phone_number} class="btn btn-ghost text-xl">{@sender_phone_number}</a>
+        <div :if={!@edit_alias}>
+          <a :if={is_nil(@alias_name)} phx-click="handle_edit_alias" class="btn btn-ghost text-xl">{@sender_phone_number}</a>
+          <div :if={!is_nil(@alias_name)} class="">
+            <a phx-click="handle_edit_alias" class="btn btn-ghost text-xl flex flex-col items-start">
+              {@alias_name}
+              <.badge size="xs" class="-mt-2 -ml-1">
+                {@sender_phone_number}
+              </.badge>
+            </a>
+          </div>
+        </div>
+        <div :if={@edit_alias}>
+          <.text_input :if={is_nil(@alias_name)} id="edit-alias-id-0" phx-hook="EditAlias" data-senderphonenumber={@sender_phone_number} class="w-full max-w-xs text-xl" ghost type="text" value={@sender_phone_number} />
+          <.text_input :if={!is_nil(@alias_name)} id="edit-alias-id-1" phx-hook="EditAlias" data-senderphonenumber={@sender_phone_number} class="w-full max-w-xs text-xl" ghost type="text" value={@alias_name} />
+        </div>
       </div>
       <div class="flex col-2 gap-2">
         <.swap animation="rotate">
@@ -76,8 +90,16 @@
                         <img src={"https://i.pravatar.cc/150?u=#{inbox.sender_phone_number}"} />
                       </div>
                     </.avatar>
-                    <span class="w-full">{inbox.sender_phone_number}</span>
-                    <.icon :if={!inbox.readed} name="hero-bell-alert" class="text-xs"/>
+                    <span :if={is_nil(inbox.alias)} class="w-full">{inbox.sender_phone_number}</span>
+                    <div :if={!is_nil(inbox.alias)} class="flex flex-col items-start">
+                      <div>
+                        <span class="w-full ml-1">{inbox.alias}</span>
+                        <.icon :if={!inbox.readed} name="hero-bell-alert" class="text-xs"/>
+                      </div>
+                      <.badge size="xs" class="ml-1">
+                        {inbox.sender_phone_number}
+                      </.badge>
+                    </div>
                   </div>
                 </.link>
               </li>

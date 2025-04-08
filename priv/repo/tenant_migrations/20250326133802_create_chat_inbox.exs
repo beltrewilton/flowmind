@@ -7,6 +7,7 @@ defmodule Flowmind.Repo.Migrations.CreateChatInbox do
       add :seed, :string
       add :phone_number_id, :string
       add :sender_phone_number, :string
+      add :alias, :string
       add :readed, :boolean
 
       timestamps(type: :utc_datetime)

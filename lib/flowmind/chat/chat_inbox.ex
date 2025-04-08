@@ -8,6 +8,7 @@ defmodule Flowmind.Chat.ChatInbox do
     field :seed, :string
     field :phone_number_id, :string
     field :sender_phone_number, :string
+    field :alias, :string
     field :readed, :boolean, default: false
 
     timestamps(type: :utc_datetime)
@@ -16,7 +17,7 @@ defmodule Flowmind.Chat.ChatInbox do
   @doc false
   def changeset(chat_inbox, attrs) do
     chat_inbox
-    |> cast(attrs, [:seed, :phone_number_id, :sender_phone_number, :readed])
+    |> cast(attrs, [:seed, :phone_number_id, :sender_phone_number, :alias, :readed])
     |> validate_required([:phone_number_id, :sender_phone_number])
   end
 end

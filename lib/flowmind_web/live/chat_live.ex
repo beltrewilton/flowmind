@@ -21,6 +21,7 @@ defmodule FlowmindWeb.ChatLive do
     if connected?(socket), do: ChatPubsub.subscribe(phone_number_id)
 
     chat_inbox = Chat.list_chat_inbox()
+    inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
 
     form_source = Chat.change_chat_history(%ChatHistory{})
 
@@ -37,6 +38,8 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:sender_phone_number, sender_phone_number)
       |> assign(:old_sender_phone_number, sender_phone_number)
       |> assign(:uploaded_files, [])
+      |> assign(:edit_alias, false)
+      |> assign(:alias_name, inbox.alias)
       |> allow_upload(:avatar, accept: ~w(.jpg .jpeg .png .wav .mp4 .pdf), max_entries: 2)
       |> assign_form(form_source)
       |> push_event("scrolldown", %{value: 1})
@@ -213,6 +216,38 @@ defmodule FlowmindWeb.ChatLive do
       socket
       |> allow_upload(:avatar, accept: accept, max_entries: 2)
       |> push_event("fire_file_chooser", %{value: 1})
+
+    {:noreply, socket}
+  end
+  
+  @impl true
+  def handle_event("handle_edit_alias", entry, socket) do
+    IO.inspect(entry, label: "handle_edit_alias")
+    
+    socket =
+      socket
+      |> assign(:edit_alias, true)
+
+    {:noreply, socket}
+  end
+  
+  @impl true
+  def handle_event("handle_change_alias", entry, socket) do
+    IO.inspect(entry, label: "handle_change_alias")
+    input_value = Map.get(entry, "input_value")
+    sender_phone_number = Map.get(entry, "sender_phone_number")
+    IO.inspect(input_value)
+    IO.inspect(sender_phone_number)
+    chat_inbox = socket.assigns.chat_inbox
+    inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
+    Chat.update_chat_inbox(inbox, %{"alias" => input_value})
+    chat_inbox = Chat.list_chat_inbox()
+    
+    socket =
+      socket
+      |> assign(:alias_name, input_value)
+      |> assign(:edit_alias, false)
+      |> assign(:chat_inbox, chat_inbox)
 
     {:noreply, socket}
   end

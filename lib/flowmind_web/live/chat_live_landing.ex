@@ -25,6 +25,8 @@ defmodule FlowmindWeb.ChatLiveLanding do
       |> assign(:chat_inbox, chat_inbox)
       |> assign(:tenant, tenant)
       |> assign(:tenant_accounts, [])
+      |> assign(:edit_alias, false)
+      |> assign(:alias_name, nil)
 
     {:ok, socket, layout: {FlowmindWeb.ChatLayouts, :app}}
   end
