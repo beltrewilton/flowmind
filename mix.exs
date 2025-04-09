@@ -69,7 +69,7 @@ defmodule Flowmind.MixProject do
       {:corsica, "~> 2.1"},
       {:daisy_ui_components, "~> 0.8"},
       {:whatsappx, path: whatsappx_path},
-      {:country_lookup, "~> 0.0.1"}
+      {:country_lookup, "~> 0.0.2"}
     ]
   end
 

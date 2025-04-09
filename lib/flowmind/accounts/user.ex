@@ -13,6 +13,7 @@ defmodule Flowmind.Accounts.User do
     field :confirmed_at, :utc_datetime
     
     belongs_to :company, Flowmind.Accounts.Company
+    has_one :employee, Flowmind.Organization.Employee, foreign_key: :user_id, references: :id
 
     timestamps(type: :utc_datetime)
   end
