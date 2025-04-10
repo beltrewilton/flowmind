@@ -19,4 +19,24 @@ defmodule Flowmind.OrganizationFixtures do
 
     employee
   end
+
+  @doc """
+  Generate a customer.
+  """
+  def customer_fixture(attrs \\ %{}) do
+    {:ok, customer} =
+      attrs
+      |> Enum.into(%{
+        avatar: "some avatar",
+        document_id: "some document_id",
+        email: "some email",
+        name: "some name",
+        note: "some note",
+        phone_number: "some phone_number",
+        status: "some status"
+      })
+      |> Flowmind.Organization.create_customer()
+
+    customer
+  end
 end

@@ -14,6 +14,7 @@ defmodule Flowmind.Accounts.User do
     
     belongs_to :company, Flowmind.Accounts.Company
     has_one :employee, Flowmind.Organization.Employee, foreign_key: :user_id, references: :id
+    has_many :customers, Flowmind.Organization.Customer, foreign_key: :user_id, references: :id
 
     timestamps(type: :utc_datetime)
   end
