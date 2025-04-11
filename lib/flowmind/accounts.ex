@@ -352,6 +352,22 @@ defmodule Flowmind.Accounts do
     end
   end
 
+  def get_users_by_company(company_id) do
+    from(u in User,
+      where: u.company_id == ^company_id,
+      preload: [:company]
+    )
+    |> Repo.all()
+  end
+  
+  def get_user_by_id!(id) do
+    from(u in User,
+      where: u.id == ^id,
+      preload: [:company]
+    )
+    |> Repo.one!()
+  end
+
   alias Flowmind.Accounts.Company
 
   @doc """
@@ -504,6 +520,7 @@ defmodule Flowmind.Accounts do
   """
   def create_tenant_account(attrs \\ %{}) do
     tenant = Flowmind.TenantGenServer.get_tenant()
+
     %TenantAccount{}
     |> TenantAccount.changeset(attrs)
     |> Repo.insert(prefix: tenant)
@@ -523,6 +540,7 @@ defmodule Flowmind.Accounts do
   """
   def update_tenant_account(%TenantAccount{} = tenant_account, attrs) do
     tenant = Flowmind.TenantGenServer.get_tenant()
+
     tenant_account
     |> TenantAccount.changeset(attrs)
     |> Repo.update(prefix: tenant)
@@ -556,14 +574,13 @@ defmodule Flowmind.Accounts do
   def change_tenant_account(%TenantAccount{} = tenant_account, attrs \\ %{}) do
     TenantAccount.changeset(tenant_account, attrs)
   end
-  
-  
+
   def insert_tenant_account(attrs, tenant) do
     %TenantAccount{}
     |> TenantAccount.changeset(attrs)
     |> Repo.insert(prefix: tenant)
   end
-  
+
   def mocked_data(tenant) do
     # Insert multiple demo tenant accounts
     [
@@ -603,7 +620,7 @@ defmodule Flowmind.Accounts do
       }
     ]
     |> Enum.each(&insert_tenant_account(&1, tenant))
-    
+
     IO.puts("✅ Demo data loaded successfully!")
-    end
+  end
 end

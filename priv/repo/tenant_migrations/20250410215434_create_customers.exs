@@ -10,6 +10,7 @@ defmodule Flowmind.Repo.Migrations.CreateCustomers do
       add :avatar, :string
       add :status, :string
       add :document_id, :string
+      add :country, :string
       add :note, :text
       add :extra_fields, :map
       add :user_id, references(:users, type: :binary_id, on_delete: :nothing, prefix: "public")

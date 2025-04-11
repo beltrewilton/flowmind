@@ -55,6 +55,7 @@ defmodule Flowmind.Organization do
   """
   def create_employee(attrs \\ %{}) do
     tenant = Flowmind.TenantGenServer.get_tenant()
+
     %Employee{}
     |> Employee.changeset(attrs)
     |> Repo.insert(prefix: tenant)
@@ -74,6 +75,7 @@ defmodule Flowmind.Organization do
   """
   def update_employee(%Employee{} = employee, attrs) do
     tenant = Flowmind.TenantGenServer.get_tenant()
+
     employee
     |> Employee.changeset(attrs)
     |> Repo.update(prefix: tenant)
@@ -139,7 +141,7 @@ defmodule Flowmind.Organization do
       ** (Ecto.NoResultsError)
 
   """
-  def get_customer!(id) do 
+  def get_customer!(id) do
     tenant = Flowmind.TenantGenServer.get_tenant()
     Repo.get!(Customer, id, prefix: tenant)
   end
@@ -158,6 +160,7 @@ defmodule Flowmind.Organization do
   """
   def create_customer(attrs \\ %{}) do
     tenant = Flowmind.TenantGenServer.get_tenant()
+
     %Customer{}
     |> Customer.changeset(attrs)
     |> Repo.insert(prefix: tenant)
@@ -177,6 +180,16 @@ defmodule Flowmind.Organization do
   """
   def update_customer(%Customer{} = customer, attrs) do
     tenant = Flowmind.TenantGenServer.get_tenant()
+
+    customer
+    |> Customer.changeset(attrs)
+    |> Repo.update(prefix: tenant)
+  end
+
+  def update_customer_by_phone_number(phone_number, attrs) do
+    tenant = Flowmind.TenantGenServer.get_tenant()
+    customer = Repo.get_by!(Customer, [phone_number: phone_number], prefix: tenant)
+
     customer
     |> Customer.changeset(attrs)
     |> Repo.update(prefix: tenant)

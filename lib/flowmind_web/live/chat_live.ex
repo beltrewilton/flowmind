@@ -1,10 +1,12 @@
 defmodule FlowmindWeb.ChatLive do
   use FlowmindWeb, :live_view
 
+  alias Flowmind.Organization
   alias Flowmind.Chat
   alias Phoenix.PubSub
   alias Flowmind.Chat.ChatHistory
   alias FlowmindWeb.ChatPubsub
+  alias FlowmindWeb.ChatLiveHelper
 
   def doc do
     "Chat"
@@ -220,30 +222,41 @@ defmodule FlowmindWeb.ChatLive do
 
     {:noreply, socket}
   end
-  
+
   @impl true
   def handle_event("handle_edit_alias", entry, socket) do
     IO.inspect(entry, label: "handle_edit_alias")
-    
+
     socket =
       socket
       |> assign(:edit_alias, true)
 
     {:noreply, socket}
   end
-  
+
   @impl true
   def handle_event("handle_change_alias", entry, socket) do
+    country = socket.assigns.country
+    chat_inbox = socket.assigns.chat_inbox
+
     IO.inspect(entry, label: "handle_change_alias")
     input_value = Map.get(entry, "input_value")
     sender_phone_number = Map.get(entry, "sender_phone_number")
     IO.inspect(input_value)
     IO.inspect(sender_phone_number)
-    chat_inbox = socket.assigns.chat_inbox
     inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
-    Chat.update_chat_inbox(inbox, %{"alias" => input_value})
-    chat_inbox = Chat.list_chat_inbox()
+    inbox = Chat.update_chat_inbox(inbox, %{"alias" => input_value})
     
+    phone_number_id = socket.assigns.phone_number_id
+    inbox |> ChatPubsub.notify(:refresh_inbox, phone_number_id)
+
+    Organization.update_customer_by_phone_number(sender_phone_number, %{
+      "name" => input_value,
+      "country" => country.name
+    })
+
+    chat_inbox = Chat.list_chat_inbox()
+
     socket =
       socket
       |> assign(:alias_name, input_value)
@@ -303,33 +316,7 @@ defmodule FlowmindWeb.ChatLive do
 
   @impl true
   def handle_info({:refresh_inbox, message}, socket) do
-    # chat_inbox = socket.assigns.chat_inbox ++ [message]
-    chat_inbox = Chat.list_chat_inbox()
-    current_path = socket.assigns.current_path
-    chat_history = socket.assigns.chat_history
-
-    sender_phone_number = message.sender_phone_number
-    phone_number_id = message.phone_number_id
-    IO.inspect(current_path, label: "handle_info current_path")
-    IO.inspect(sender_phone_number, label: "handle_info sender_phone_number")
-
-    is_active_number? = String.contains?(current_path, sender_phone_number)
-
-    chat_inbox =
-      if is_active_number?,
-        do: as_readed(chat_inbox, sender_phone_number, chat_history, phone_number_id),
-        else: chat_inbox
-
-    phone_number_id = message.phone_number_id
-
-    IO.inspect(message, label: "refresh_inbox chat_inbox")
-
-    socket =
-      socket
-      |> assign(chat_inbox: chat_inbox)
-      |> assign(phone_number_id: phone_number_id)
-
-    {:noreply, socket}
+    ChatLiveHelper.refresh_inbox(message, socket)
   end
 
   @impl true
@@ -354,7 +341,8 @@ defmodule FlowmindWeb.ChatLive do
     was_readed = if is_nil(inbox), do: true, else: inbox.readed
 
     chat_inbox =
-      chat_inbox |> as_readed(sender_phone_number, chat_history, phone_number_id, was_readed)
+      chat_inbox
+      |> ChatLiveHelper.as_readed(sender_phone_number, chat_history, phone_number_id, was_readed)
 
     if !is_nil(inbox), do: Chat.update_chat_inbox(inbox, %{"readed" => true})
 
@@ -371,6 +359,8 @@ defmodule FlowmindWeb.ChatLive do
       |> assign(:chat_history, chat_history)
       |> assign(:sender_phone_number, sender_phone_number)
       |> assign(:old_sender_phone_number, sender_phone_number)
+      |> assign(:alias_name, inbox.alias)
+      |> assign(:country, CountryLookup.lookup_by_code(sender_phone_number))
       |> push_event("scrolldown", %{value: 1})
       |> push_event("focus_on_input_text", %{value: 1})
 
@@ -379,36 +369,6 @@ defmodule FlowmindWeb.ChatLive do
 
   defp assign_form(socket, %{} = source) do
     assign(socket, :form, to_form(source, as: "chat_entry_form"))
-  end
-
-  defp as_readed(
-         chat_inbox,
-         sender_phone_number,
-         chat_history,
-         phone_number_id,
-         was_readed \\ false
-       ) do
-    chat_inbox =
-      Enum.map(chat_inbox, fn chat ->
-        if chat.sender_phone_number == sender_phone_number do
-          if length(chat_history) > 0 and !was_readed do
-            chat = List.last(chat_history)
-            send_readed(chat.whatsapp_id, phone_number_id)
-          end
-
-          %{chat | readed: true}
-        else
-          chat
-        end
-      end)
-  end
-
-  defp send_readed(message_id, phone_number_id) do
-    WhatsappElixir.Messages.mark_as_read(
-      message_id,
-      phone_number_id,
-      WhatsappElixir.Messages.get_config()
-    )
   end
 
   @impl true
@@ -429,12 +389,12 @@ defmodule FlowmindWeb.ChatLive do
               {chat.sender_phone_number}
               <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
             </div>
-            
+
             <.live_component
               module={FlowmindWeb.ChatBubbleContent}
               id={"live-component-#{chat.id}"}
               chat={chat} />
-            
+
             <div :if={chat.source != :user} class="chat-footer opacity-50">
               <div :if={chat.readed and chat.delivered}>
                 <.icon name="hero-check" class="h-5 w-5 text-green-600" />

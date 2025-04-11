@@ -5,6 +5,7 @@ defmodule FlowmindWeb.ChatLiveLanding do
   alias Phoenix.PubSub
   alias Flowmind.Chat.ChatHistory
   alias FlowmindWeb.ChatPubsub
+  alias FlowmindWeb.ChatLiveHelper
 
   def doc do
     "Chat"
@@ -16,6 +17,8 @@ defmodule FlowmindWeb.ChatLiveLanding do
     tenant = Flowmind.TenantGenServer.get_tenant()
     phone_number_id = Map.get(params, "phone_number_id")
     IO.inspect(phone_number_id, label: "phone_number_id")
+
+    if connected?(socket), do: ChatPubsub.subscribe(phone_number_id)
 
     socket =
       socket
@@ -31,13 +34,16 @@ defmodule FlowmindWeb.ChatLiveLanding do
     {:ok, socket, layout: {FlowmindWeb.ChatLayouts, :app}}
   end
 
-
+  @impl true
+  def handle_info({:refresh_inbox, message}, socket) do
+    ChatLiveHelper.refresh_inbox(message, socket)
+  end
 
   @impl true
   def render(assigns) do
     ~H"""
     <div class="flex flex-col h-[90vh]">
-      
+
 
     </div>
     """

@@ -11,6 +11,7 @@ defmodule Flowmind.Organization.Customer do
     field :email, :string
     field :avatar, :string
     field :document_id, :string
+    field :country, :string
     field :note, :string
     field :extra_fields, :map
     
@@ -22,7 +23,7 @@ defmodule Flowmind.Organization.Customer do
   @doc false
   def changeset(customer, attrs) do
     customer
-    |> cast(attrs, [:phone_number, :name, :email, :avatar, :status, :document_id, :note, :user_id, :extra_fields])
-    |> validate_required([:phone_number, :name])
+    |> cast(attrs, [:phone_number, :name, :email, :avatar, :status, :document_id, :country, :note, :user_id, :extra_fields])
+    |> validate_required([:phone_number])
   end
 end

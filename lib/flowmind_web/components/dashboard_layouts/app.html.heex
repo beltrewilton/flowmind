@@ -52,7 +52,7 @@
         <h2 class="menu-title">Welcome</h2>
         <.link
           patch={~p"/dashboard"}
-          class={if @current_path == "/dashboard", do: "active", else: ""}
+          class={if @current_path == "/dashboard", do: "menu-active", else: ""}
         >
           <.icon name="hero-home" />Home
         </.link>
@@ -68,8 +68,13 @@
         </details>
       </:item>
       <:item>
-        <.link patch={~p"/another"} class={if @current_path == "/another", do: "active", else: ""}>
+        <.link patch={~p"/another"} class={if @current_path == "/another", do: "menu-active", else: ""}>
           <.icon name="hero-chart-bar" />Another
+        </.link>
+      </:item>
+      <:item>
+        <.link patch={~p"/userlist"} class={if @current_path == "/userlist" or String.starts_with?(@current_path, "/userprofile"), do: "menu-active", else: ""}>
+          <.icon name="hero-users" />Users
         </.link>
       </:item>
     </.menu>
