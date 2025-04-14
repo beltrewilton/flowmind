@@ -1,21 +1,28 @@
 defmodule FlowmindWeb.HomeLive do
-  alias Flowmind.Accounts
   use FlowmindWeb, :live_view
-
+  
+  alias Flowmind.Accounts
+  alias Flowmind.Accounts.User
+  
   def doc do
     "Dashboard"
   end
 
   @impl true
   def mount(_params, _session, socket) do
+    current_user = socket.assigns.current_user
     tenant = Flowmind.TenantContext.get_tenant()
 
     tenant_accounts = Accounts.list_tenant_accounts()
 
     IO.inspect(tenant_accounts, label: "tenant_accounts")
+    
+    default_attrs = %{"preference" => %{"expanded" => true, "expanded_w" => "w-80"}}
+    {:ok, current_user} = if is_nil(current_user.preference), do: Accounts.update_user_preference(current_user, default_attrs), else: {:ok, current_user}
 
     socket =
       socket
+      |> assign(:current_user, current_user)
       |> assign(:tenant, tenant)
       |> assign(:tenant_account, nil)
       |> assign(:tenant_accounts, tenant_accounts)
@@ -54,6 +61,27 @@ defmodule FlowmindWeb.HomeLive do
 
   def handle_event("dummy_event", data, socket) do
     IO.inspect(data, label: "Dummy Data")
+    {:noreply, socket}
+  end
+  
+  def handle_event("toggle_drawer", data, socket) do
+    current_user = socket.assigns.current_user
+    preference = current_user.preference || %{}
+    IO.inspect(preference, label: "Preference")
+    expanded = Map.get(preference, "expanded", false)
+    expanded_w = Map.get(preference, "expanded_w", "w-80")
+  
+    new_expanded = !expanded
+    new_expanded_w = if expanded_w == "w-80", do: "w-15", else: "w-80"
+  
+    attrs = %{"preference" => %{"expanded" => new_expanded, "expanded_w" => new_expanded_w}}
+  
+    {:ok, current_user} = Accounts.update_user_preference(current_user, attrs)
+    
+    socket = 
+      socket 
+      |> assign(:current_user, current_user)
+      
     {:noreply, socket}
   end
 

@@ -11,6 +11,7 @@ defmodule Flowmind.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :preference, :map, default: %{}
     
     belongs_to :company, Flowmind.Accounts.Company
     has_one :employee, Flowmind.Organization.Employee, foreign_key: :user_id, references: :id
@@ -49,10 +50,15 @@ defmodule Flowmind.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password, :name, :role, :company_id])
+    |> cast(attrs, [:email, :password, :name, :role, :company_id, :preference])
     |> validate_length(:name, min: 4, max: 50)
     |> validate_email(opts)
     |> validate_password(opts)
+  end
+  
+  def default_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email, :password, :name, :role, :company_id, :preference])
   end
 
   defp validate_email(changeset, opts) do

@@ -1,6 +1,7 @@
-<.drawer class="lg:drawer-open border w-full h-screen" selector_id="drawer">
+<.drawer class="lg:drawer-open border w-full h-screen" selector_id="drawer-container">
   <:drawer_content class="pb-10 b-1 bg-base-200">
     <.navbar class="bg-base-100 mb-1 shadow-xs">
+    <label for="drawer-container" class="btn btn-primary drawer-button">Open drawer</label>
       <div class="flex-1">
         <div :if={!@edit_alias}>
           <a :if={is_nil(@alias_name)} phx-click="handle_edit_alias" class="btn btn-ghost text-xl">{@sender_phone_number}</a>

@@ -383,7 +383,7 @@ defmodule Flowmind.Accounts do
     |> Ecto.Changeset.put_assoc(:customers, customers)
     |> Repo.update(prefix: tenant)
   end
-  
+
   def update_user_company(%User{} = user, company) do
     tenant = Flowmind.TenantContext.get_tenant()
 
@@ -391,6 +391,12 @@ defmodule Flowmind.Accounts do
     |> Repo.preload(:company)
     |> Ecto.Changeset.change()
     |> Ecto.Changeset.put_assoc(:company, company)
+    |> Repo.update()
+  end
+
+  def update_user_preference(%User{} = user, attrs) do
+    user
+    |> User.default_changeset(attrs)
     |> Repo.update()
   end
 
@@ -424,9 +430,9 @@ defmodule Flowmind.Accounts do
 
   """
   def get_company!(id), do: Repo.get!(Company, id)
-  
+
   def get_company_by_phone_number_id(phone_number_id) do
-    Repo.get_by(Company, [phone_number_id: phone_number_id])
+    Repo.get_by(Company, phone_number_id: phone_number_id)
   end
 
   @doc """
