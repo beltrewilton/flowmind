@@ -73,7 +73,7 @@
         </.link>
       </:item>
       <:item :if={@current_user.role in [:admin, :user]}>
-        <.link patch={~p"/userlist"} class={if @current_path == "/userlist" or String.starts_with?(@current_path, "/userprofile"), do: "menu-active", else: ""}>
+        <.link patch={~p"/userlist"} class={if @current_path == "/userlist" or String.starts_with?(@current_path, "/userprofile") or String.starts_with?(@current_path, "/usernew"), do: "menu-active", else: ""}>
           <.icon name="hero-users" />Users
         </.link>
       </:item>

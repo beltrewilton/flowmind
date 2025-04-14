@@ -55,6 +55,8 @@ defmodule FlowmindWeb.UserProfileLive do
       socket
       |> assign(:user, user)
       |> assign(:customers, customers)
+      |> put_flash(:info, "It worked!")
+      |> push_navigate(to: ~p"/userlist")
 
     {:noreply, socket}
   end

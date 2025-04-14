@@ -90,6 +90,7 @@ defmodule FlowmindWeb.Router do
       ] do
       live "/userlist", UserListLive, :index
       live "/userprofile/:id", UserProfileLive, :index
+      live "/usernew", UserNewLive, :index
     end
 
     live_session :by_pass_live_1,

@@ -30,6 +30,7 @@ defmodule FlowmindWeb.UserListLive do
   @impl true
   def render(assigns) do
     ~H"""
+    <.link patch={~p"/usernew"} >New User</.link>
     <div class="flex flex-col items-center gap-5 w-full">
       <.table id="users-id" rows={@users}>
         <:col :let={user} label="name">

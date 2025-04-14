@@ -383,6 +383,16 @@ defmodule Flowmind.Accounts do
     |> Ecto.Changeset.put_assoc(:customers, customers)
     |> Repo.update(prefix: tenant)
   end
+  
+  def update_user_company(%User{} = user, company) do
+    tenant = Flowmind.TenantContext.get_tenant()
+
+    user
+    |> Repo.preload(:company)
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.put_assoc(:company, company)
+    |> Repo.update()
+  end
 
   alias Flowmind.Accounts.Company
 
