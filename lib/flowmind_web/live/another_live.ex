@@ -7,7 +7,7 @@ defmodule FlowmindWeb.AnotherLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     socket =
       socket
       |> assign(:tenant, tenant)

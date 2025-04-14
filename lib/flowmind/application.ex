@@ -12,6 +12,7 @@ defmodule Flowmind.Application do
       Flowmind.Repo,
       {DNSCluster, query: Application.get_env(:flowmind, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Flowmind.PubSub},
+      FlowmindWeb.Presence,
       # Start the Finch HTTP client for sending emails
       {Finch, name: Flowmind.Finch},
       # Start a worker by calling: Flowmind.Worker.start_link(arg)
@@ -20,6 +21,7 @@ defmodule Flowmind.Application do
       FlowmindWeb.Endpoint,
       {Plug.Cowboy, scheme: :http, plug: Webhook.Router, options: [port: 7001]},
       Flowmind.TenantGenServer,
+      {Task, fn -> Flowmind.Data.Mem.start end},
       CountryLookup
     ]
 

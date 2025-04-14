@@ -69,7 +69,8 @@ defmodule FlowmindWeb.Router do
       layout: {FlowmindWeb.DashboardLayouts, :app},
       on_mount: [
         {FlowmindWeb.UserAuth, :ensure_authenticated},
-        {FlowmindWeb.PathSocket, :put_path_in_socket}
+        {FlowmindWeb.PathSocket, :put_path_in_socket},
+        {FlowmindWeb.UserAuth, :load_chat_inbox}
       ] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
@@ -77,10 +78,40 @@ defmodule FlowmindWeb.Router do
       live "/demo", DemoLive, :index
       live "/dashboard", HomeLive, :index
       live "/another", AnotherLive, :index
+      live "/not_authorized", NotAuthorized, :index
+    end
+
+    live_session :by_pass_live,
+      layout: {FlowmindWeb.DashboardLayouts, :app},
+      on_mount: [
+        {FlowmindWeb.UserAuth, :ensure_authenticated},
+        {FlowmindWeb.UserAuth, :ensure_admin_or_user},
+        {FlowmindWeb.PathSocket, :put_path_in_socket}
+      ] do
       live "/userlist", UserListLive, :index
       live "/userprofile/:id", UserProfileLive, :index
-      live "/chat/:phone_number_id/:sender_phone_number", ChatLive, :index
+    end
+
+    live_session :by_pass_live_1,
+      layout: {FlowmindWeb.DashboardLayouts, :app},
+      on_mount: [
+        {FlowmindWeb.UserAuth, :ensure_authenticated},
+        {FlowmindWeb.PathSocket, :put_path_in_socket},
+        {FlowmindWeb.UserAuth, :load_chat_inbox},
+        {FlowmindWeb.UserAuth, :ensure_has_phone_number_id}
+      ] do
       live "/chat/:phone_number_id", ChatLiveLanding, :index
+    end
+
+    live_session :by_pass_live_2,
+      layout: {FlowmindWeb.DashboardLayouts, :app},
+      on_mount: [
+        {FlowmindWeb.UserAuth, :ensure_authenticated},
+        {FlowmindWeb.PathSocket, :put_path_in_socket},
+        {FlowmindWeb.UserAuth, :load_chat_inbox},
+        {FlowmindWeb.UserAuth, :ensure_has_customer}
+      ] do
+      live "/chat/:phone_number_id/:sender_phone_number", ChatLive, :index
     end
   end
 

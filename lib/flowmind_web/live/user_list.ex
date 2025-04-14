@@ -9,7 +9,7 @@ defmodule FlowmindWeb.UserListLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     current_user = socket.assigns.current_user
     users = Accounts.get_users_by_company(current_user.company_id)
 

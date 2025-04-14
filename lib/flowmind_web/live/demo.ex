@@ -17,7 +17,7 @@ defmodule FlowmindWeb.DemoLive do
   
   def mount(_params, _session, socket) do
     list_tenants = Accounts.list_tenant_accounts()
-    tenant_info = Flowmind.TenantGenServer.get_tenant()
+    tenant_info = Flowmind.TenantContext.get_tenant()
     socket = assign(socket, :list_tenants, list_tenants)
     socket = assign(socket, :tenant_info, tenant_info)
     {:ok, socket}

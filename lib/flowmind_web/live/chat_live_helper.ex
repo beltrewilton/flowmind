@@ -3,14 +3,16 @@ defmodule FlowmindWeb.ChatLiveHelper do
 
   def refresh_inbox(message, socket) do
     # chat_inbox = socket.assigns.chat_inbox ++ [message]
-    chat_inbox = Chat.list_chat_inbox()
+    current_user = socket.assigns.current_user
+    chat_inbox = Chat.list_chat_inbox(current_user)
     current_path = socket.assigns.current_path
     chat_history = socket.assigns.chat_history
-
+    {_, message} = message
+  
     sender_phone_number = message.sender_phone_number
     phone_number_id = message.phone_number_id
-    IO.inspect(current_path, label: "handle_info current_path")
-    IO.inspect(sender_phone_number, label: "handle_info sender_phone_number")
+    # IO.inspect(current_path, label: "handle_info current_path")
+    # IO.inspect(sender_phone_number, label: "handle_info sender_phone_number")
 
     is_active_number? = String.contains?(current_path, sender_phone_number)
 

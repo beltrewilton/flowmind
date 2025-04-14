@@ -8,6 +8,7 @@ defmodule Flowmind.Chat do
 
   alias Flowmind.Chat.ChatHistory
   alias Flowmind.Organization
+  alias Flowmind.Accounts.User
 
   @doc """
   Returns the list of chat_history.
@@ -19,12 +20,12 @@ defmodule Flowmind.Chat do
 
   """
   def list_chat_history do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.all(ChatHistory, prefix: tenant)
   end
 
   def list_chat_history(sender_phone_number) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     chat_history =
       from ch in ChatHistory,
@@ -52,7 +53,7 @@ defmodule Flowmind.Chat do
 
   """
   def get_chat_history!(id) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.get!(ChatHistory, id, prefix: tenant)
   end
 
@@ -69,10 +70,11 @@ defmodule Flowmind.Chat do
 
   """
   def create_chat_history(attrs \\ %{}) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
-    changeset = %ChatHistory{}
-    |> ChatHistory.changeset(attrs)
+    changeset =
+      %ChatHistory{}
+      |> ChatHistory.changeset(attrs)
 
     with {:ok, entity} <- Repo.insert(changeset, prefix: tenant) do
       {:ok, Repo.preload(entity, [:chat_history])}
@@ -92,7 +94,7 @@ defmodule Flowmind.Chat do
 
   """
   def update_chat_history(%ChatHistory{} = chat_history, attrs) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     chat_history
     |> ChatHistory.changeset(attrs)
@@ -100,7 +102,7 @@ defmodule Flowmind.Chat do
   end
 
   def mark_as_readed_or_delivered(whatsapp_id, action \\ :delivered) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     query =
       from(ch in ChatHistory,
@@ -122,10 +124,8 @@ defmodule Flowmind.Chat do
     end
 
     {:ok,
-     Repo.get_by(ChatHistory, [whatsapp_id: whatsapp_id],
-       prefix: tenant
-     ) |> Repo.preload([:chat_history])
-    }
+     Repo.get_by(ChatHistory, [whatsapp_id: whatsapp_id], prefix: tenant)
+     |> Repo.preload([:chat_history])}
   end
 
   @doc """
@@ -141,7 +141,7 @@ defmodule Flowmind.Chat do
 
   """
   def delete_chat_history(%ChatHistory{} = chat_history) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.delete(chat_history, prefix: tenant)
   end
 
@@ -169,10 +169,30 @@ defmodule Flowmind.Chat do
       [%ChatInbox{}, ...]
 
   """
+  
   def list_chat_inbox do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     ChatInbox
+    |> order_by(desc: :updated_at)
+    |> Repo.all(prefix: tenant)
+  end
+  
+  
+  def list_chat_inbox(%User{} = user) do
+    tenant = Flowmind.TenantContext.get_tenant()
+    
+    user = Flowmind.Repo.preload(user, :customers, prefix: tenant)
+    
+    IO.inspect(user, label: "user")
+
+    phone_numbers =
+      user.customers
+      |> Enum.map(& &1.phone_number)
+      |> Enum.reject(&is_nil/1)
+
+    ChatInbox
+    |> where([ci], ci.sender_phone_number in ^phone_numbers)
     |> order_by(desc: :updated_at)
     |> Repo.all(prefix: tenant)
   end
@@ -192,7 +212,7 @@ defmodule Flowmind.Chat do
 
   """
   def get_chat_inbox!(id) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.get!(ChatInbox, id, prefix: tenant)
   end
 
@@ -209,14 +229,14 @@ defmodule Flowmind.Chat do
 
   """
   def create_chat_inbox(attrs \\ %{}) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     case Repo.get_by(ChatInbox, [sender_phone_number: attrs["sender_phone_number"]],
            prefix: tenant
          ) do
       nil ->
         attrs = Map.put(attrs, "seed", UUID.uuid1())
-        
+
         Organization.create_customer(%{phone_number: attrs["sender_phone_number"]})
 
         %ChatInbox{}
@@ -245,7 +265,9 @@ defmodule Flowmind.Chat do
 
   """
   def update_chat_inbox(%ChatInbox{} = chat_inbox, attrs) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
+    
+    IO.inspect(tenant, label: "update_chat_inbox:tenant")
 
     chat_inbox
     |> ChatInbox.changeset(attrs)
@@ -265,7 +287,7 @@ defmodule Flowmind.Chat do
 
   """
   def delete_chat_inbox(%ChatInbox{} = chat_inbox) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.delete(chat_inbox, prefix: tenant)
   end
 

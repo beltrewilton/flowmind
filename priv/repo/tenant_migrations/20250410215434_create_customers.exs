@@ -13,11 +13,11 @@ defmodule Flowmind.Repo.Migrations.CreateCustomers do
       add :country, :string
       add :note, :text
       add :extra_fields, :map
-      add :user_id, references(:users, type: :binary_id, on_delete: :nothing, prefix: "public")
+      # add :user_id, references(:users, type: :binary_id, on_delete: :nothing, prefix: "public")
 
       timestamps(type: :utc_datetime)
     end
     
-    create index(:customers, [:phone_number, :user_id])
+    create index(:customers, [:phone_number])
   end
 end

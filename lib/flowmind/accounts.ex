@@ -59,7 +59,13 @@ defmodule Flowmind.Accounts do
       ** (Ecto.NoResultsError)
 
   """
-  def get_user!(id), do: Repo.get!(User, id)
+  def get_user!(id) do
+    tenant = Flowmind.TenantContext.get_tenant()
+
+    Repo.get!(User, id)
+    |> Repo.preload(:company)
+    |> Repo.preload(:customers, prefix: tenant)
+  end
 
   ## User registration
 
@@ -359,13 +365,23 @@ defmodule Flowmind.Accounts do
     )
     |> Repo.all()
   end
-  
+
   def get_user_by_id!(id) do
     from(u in User,
       where: u.id == ^id,
       preload: [:company]
     )
     |> Repo.one!()
+  end
+
+  def update_user_customers(%User{} = user, customers) do
+    tenant = Flowmind.TenantContext.get_tenant()
+
+    user
+    |> Repo.preload(:customers, prefix: tenant)
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.put_assoc(:customers, customers)
+    |> Repo.update(prefix: tenant)
   end
 
   alias Flowmind.Accounts.Company
@@ -398,6 +414,10 @@ defmodule Flowmind.Accounts do
 
   """
   def get_company!(id), do: Repo.get!(Company, id)
+  
+  def get_company_by_phone_number_id(phone_number_id) do
+    Repo.get_by(Company, [phone_number_id: phone_number_id])
+  end
 
   @doc """
   Creates a company.
@@ -483,7 +503,7 @@ defmodule Flowmind.Accounts do
 
   """
   def list_tenant_accounts do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.all(TenantAccount, prefix: tenant)
   end
 
@@ -502,8 +522,13 @@ defmodule Flowmind.Accounts do
 
   """
   def get_tenant_account!(id) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.get!(TenantAccount, id, prefix: tenant)
+  end
+
+  def get_tenant_account_by_phone_number_id(phone_number_id) do
+    tenant = Flowmind.TenantContext.get_tenant()
+    Repo.get_by(TenantAccount, [phone_number_id: phone_number_id], prefix: tenant)
   end
 
   @doc """
@@ -519,7 +544,7 @@ defmodule Flowmind.Accounts do
 
   """
   def create_tenant_account(attrs \\ %{}) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     %TenantAccount{}
     |> TenantAccount.changeset(attrs)
@@ -539,7 +564,7 @@ defmodule Flowmind.Accounts do
 
   """
   def update_tenant_account(%TenantAccount{} = tenant_account, attrs) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     tenant_account
     |> TenantAccount.changeset(attrs)

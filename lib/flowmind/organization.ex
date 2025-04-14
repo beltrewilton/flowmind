@@ -7,6 +7,7 @@ defmodule Flowmind.Organization do
   alias Flowmind.Repo
 
   alias Flowmind.Organization.Employee
+  alias Flowmind.Accounts.User
 
   @doc """
   Returns the list of employees.
@@ -18,7 +19,7 @@ defmodule Flowmind.Organization do
 
   """
   def list_employees do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.all(Employee, prefix: tenant)
   end
 
@@ -37,7 +38,7 @@ defmodule Flowmind.Organization do
 
   """
   def get_employee!(id) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.get!(Employee, id, prefix: tenant)
   end
 
@@ -54,7 +55,7 @@ defmodule Flowmind.Organization do
 
   """
   def create_employee(attrs \\ %{}) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     %Employee{}
     |> Employee.changeset(attrs)
@@ -74,7 +75,7 @@ defmodule Flowmind.Organization do
 
   """
   def update_employee(%Employee{} = employee, attrs) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     employee
     |> Employee.changeset(attrs)
@@ -94,7 +95,7 @@ defmodule Flowmind.Organization do
 
   """
   def delete_employee(%Employee{} = employee) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.delete(employee, prefix: tenant)
   end
 
@@ -123,9 +124,25 @@ defmodule Flowmind.Organization do
 
   """
   def list_customers do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.all(Customer, prefix: tenant)
   end
+  
+  def list_customers_with_check(%User{} = user) do
+    tenant = Flowmind.TenantContext.get_tenant()
+  
+    user_customer_ids = MapSet.new(Enum.map(user.customers, & &1.id))
+  
+    Repo.all(Customer, prefix: tenant)
+    |> Enum.map(fn customer ->
+      if MapSet.member?(user_customer_ids, customer.id) do
+        %{customer | checked: true}
+      else
+        customer
+      end
+    end)
+  end
+
 
   @doc """
   Gets a single customer.
@@ -142,7 +159,7 @@ defmodule Flowmind.Organization do
 
   """
   def get_customer!(id) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.get!(Customer, id, prefix: tenant)
   end
 
@@ -159,7 +176,7 @@ defmodule Flowmind.Organization do
 
   """
   def create_customer(attrs \\ %{}) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     %Customer{}
     |> Customer.changeset(attrs)
@@ -179,7 +196,7 @@ defmodule Flowmind.Organization do
 
   """
   def update_customer(%Customer{} = customer, attrs) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     customer
     |> Customer.changeset(attrs)
@@ -187,7 +204,7 @@ defmodule Flowmind.Organization do
   end
 
   def update_customer_by_phone_number(phone_number, attrs) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     customer = Repo.get_by!(Customer, [phone_number: phone_number], prefix: tenant)
 
     customer
@@ -208,7 +225,7 @@ defmodule Flowmind.Organization do
 
   """
   def delete_customer(%Customer{} = customer) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
     Repo.delete(customer, prefix: tenant)
   end
 

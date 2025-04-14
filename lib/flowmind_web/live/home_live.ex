@@ -8,7 +8,7 @@ defmodule FlowmindWeb.HomeLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     tenant_accounts = Accounts.list_tenant_accounts()
 

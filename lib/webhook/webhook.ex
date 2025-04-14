@@ -4,7 +4,10 @@ defmodule Webhook.Router do
   import Plug.Conn
 
   alias Flowmind.Chat
+  alias Flowmind.Accounts
   alias FlowmindWeb.ChatPubsub
+
+  alias Flowmind.Data.Mem
 
   plug(:match)
   plug(Plug.Parsers, parsers: [:json], pass: ["application/json"], json_decoder: Jason)
@@ -35,7 +38,7 @@ defmodule Webhook.Router do
 
   post "/:tenant" do
     data = conn.body_params
-    handle_notification(WS.handle_notification(data), data, tenant)
+    handle_notification(WS.handle_notification(data), data, tenant, conn)
 
     send_resp(conn, 200, Jason.encode!(%{"status" => "success"}))
   end
@@ -46,14 +49,14 @@ defmodule Webhook.Router do
     send_resp(conn, 404, "You are trying something that does not exist.")
   end
 
-  def handle_notification(%Whatsapp.Client.Sender{} = data, rawdata, tenant) do
+  def handle_notification(%Whatsapp.Client.Sender{} = data, rawdata, tenant, %Plug.Conn{} = conn) do
     sender = data.sender_request
 
-    IO.inspect(tenant, label: "tenant")
+    IO.inspect(tenant, label: "tenant from webhook")
 
-    IO.inspect(sender, label: "sender")
+    # IO.inspect(sender, label: "sender")
 
-    IO.inspect(rawdata, label: "rawdata")
+    # IO.inspect(rawdata, label: "rawdata")
 
     waba_id = Keyword.get(sender, :waba_id)
     sender_phone_number = Keyword.get(sender, :sender_phone_number)
@@ -95,40 +98,47 @@ defmodule Webhook.Router do
       "readed" => false
     }
 
-    ChatPubsub.subscribe(sender_phone_number)
+    ChatPubsub.subscribe(sender_phone_number, phone_number_id)
+
+    IO.inspect(Flowmind.TenantContext.get_tenant(), label: "Flowmind.TenantContext.get_tenant()")
+    Flowmind.TenantContext.put_tenant(tenant)
+    IO.inspect(Flowmind.TenantContext.get_tenant(), label: "Flowmind.TenantContext.get_tenant()")
 
     Chat.create_chat_history(chat_history_form)
-    |> ChatPubsub.notify(:message_created, sender_phone_number)
+    |> ChatPubsub.notify(:message_created, sender_phone_number, phone_number_id)
 
     Chat.create_chat_inbox(chat_inbox) |> ChatPubsub.notify(:refresh_inbox, phone_number_id)
 
     log_notification(rawdata, waba_id)
   end
 
-  def handle_notification(%Whatsapp.Meta.Request{} = data, rawdata, tenant) do
+  def handle_notification(%Whatsapp.Meta.Request{} = data, rawdata, tenant, %Plug.Conn{} = _conn) do
     sender = data.meta_request
     waba_id = Keyword.get(sender, :waba_id)
+    phone_number_id = Keyword.get(sender, :phone_number_id)
     sender_phone_number = Keyword.get(sender, :sender_phone_number)
     status = Keyword.get(sender, :status)
 
     IO.inspect(data.meta_request, label: "meta_request")
+    
+    Flowmind.TenantContext.put_tenant(tenant)
 
     case status do
       "read" ->
         whatsapp_id = Keyword.get(sender, :wa_message_id)
 
-        ChatPubsub.subscribe(sender_phone_number)
+        ChatPubsub.subscribe(sender_phone_number, phone_number_id)
 
         Chat.mark_as_readed_or_delivered(whatsapp_id, :readed)
-        |> ChatPubsub.notify(:notify_message_readed, sender_phone_number)
+        |> ChatPubsub.notify(:notify_message_readed, sender_phone_number, phone_number_id)
 
       "delivered" ->
         whatsapp_id = Keyword.get(sender, :wa_message_id)
 
-        ChatPubsub.subscribe(sender_phone_number)
+        ChatPubsub.subscribe(sender_phone_number, phone_number_id)
 
         Chat.mark_as_readed_or_delivered(whatsapp_id, :delivered)
-        |> ChatPubsub.notify(:notify_message_delivered, sender_phone_number)
+        |> ChatPubsub.notify(:notify_message_delivered, sender_phone_number, phone_number_id)
 
       _ ->
         :ok
@@ -137,7 +147,7 @@ defmodule Webhook.Router do
     log_notification(rawdata, waba_id)
   end
 
-  def handle_notification(_, _) do
+  def handle_notification(_, _, _) do
     IO.puts("Nothing todo handle_notification !")
   end
 
@@ -181,8 +191,9 @@ defmodule Webhook.Router do
         {:ok, filename}
       end
 
-    filename = filename |> String.split("multimedia") |> Enum.at(1)
-    "/images/multimedia#{filename}"
+    IO.inspect(filename, label: "filename_image")
+    filename = filename |> String.split("flowmind") |> Enum.at(1)
+    filename
   end
 
   def log_notification(data, waba_id) do

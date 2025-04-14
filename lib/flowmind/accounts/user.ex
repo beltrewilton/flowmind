@@ -14,7 +14,12 @@ defmodule Flowmind.Accounts.User do
     
     belongs_to :company, Flowmind.Accounts.Company
     has_one :employee, Flowmind.Organization.Employee, foreign_key: :user_id, references: :id
-    has_many :customers, Flowmind.Organization.Customer, foreign_key: :user_id, references: :id
+    # has_many :customers, Flowmind.Organization.Customer, foreign_key: :user_id, references: :id
+    many_to_many :customers, Flowmind.Organization.Customer,
+      join_through: "users_customers",
+      join_keys: [user_id: :id, customer_id: :id],
+      on_replace: :delete
+
 
     timestamps(type: :utc_datetime)
   end

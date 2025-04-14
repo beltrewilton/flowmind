@@ -13,8 +13,9 @@ defmodule FlowmindWeb.ChatLiveLanding do
 
   @impl true
   def mount(params, _session, socket) do
-    chat_inbox = Chat.list_chat_inbox()
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    # current_user = socket.assigns.current_user
+    # chat_inbox = Chat.list_chat_inbox(current_user)
+    tenant = Flowmind.TenantContext.get_tenant()
     phone_number_id = Map.get(params, "phone_number_id")
     IO.inspect(phone_number_id, label: "phone_number_id")
 
@@ -25,7 +26,6 @@ defmodule FlowmindWeb.ChatLiveLanding do
       |> assign(:phone_number_id, phone_number_id)
       |> assign(:sender_phone_number, nil)
       |> assign(:chat_history, [])
-      |> assign(:chat_inbox, chat_inbox)
       |> assign(:tenant, tenant)
       |> assign(:tenant_accounts, [])
       |> assign(:edit_alias, false)

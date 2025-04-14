@@ -18,16 +18,17 @@ defmodule FlowmindWeb.ChatLive do
     sender_phone_number = Map.get(params, "sender_phone_number")
     phone_number_id = Map.get(params, "phone_number_id")
 
-    if connected?(socket), do: ChatPubsub.subscribe(sender_phone_number)
+    if connected?(socket), do: ChatPubsub.subscribe(sender_phone_number, phone_number_id)
 
     if connected?(socket), do: ChatPubsub.subscribe(phone_number_id)
 
-    chat_inbox = Chat.list_chat_inbox()
+    chat_inbox = socket.assigns.chat_inbox
+    # chat_inbox = Chat.list_chat_inbox(current_user)
     inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
 
     form_source = Chat.change_chat_history(%ChatHistory{})
 
-    tenant = Flowmind.TenantGenServer.get_tenant()
+    tenant = Flowmind.TenantContext.get_tenant()
 
     socket =
       socket
@@ -62,9 +63,9 @@ defmodule FlowmindWeb.ChatLive do
     uploaded_files =
       consume_uploaded_entries(socket, :avatar, fn %{path: path}, entry ->
         client_name = entry.client_name
-        dest = Path.join([:code.priv_dir(:flowmind), "static", "images", "uploads", client_name])
+        dest = Path.join([File.cwd!(), "uploads", client_name])
         File.cp!(path, dest)
-        {:ok, "#{File.cwd!()}/priv/static/images/uploads/#{Path.basename(dest)}"}
+        {:ok, "#{File.cwd!()}/uploads/#{Path.basename(dest)}"}
       end)
 
     ref_whatsapp_id =
@@ -141,14 +142,14 @@ defmodule FlowmindWeb.ChatLive do
 
         chat_entry_form
         |> Map.put("caption", Map.get(chat_entry_form, "message", ":)"))
-        |> Map.put("message", "/images/uploads/#{basename}")
+        |> Map.put("message", "/uploads/#{basename}")
         |> Map.put("message_type", message_type)
       else
         chat_entry_form
       end
 
     Chat.create_chat_history(chat_entry_form)
-    |> ChatPubsub.notify(:message_created, sender_phone_number)
+    |> ChatPubsub.notify(:message_created, sender_phone_number, phone_number_id)
 
     socket =
       socket
@@ -238,6 +239,7 @@ defmodule FlowmindWeb.ChatLive do
   def handle_event("handle_change_alias", entry, socket) do
     country = socket.assigns.country
     chat_inbox = socket.assigns.chat_inbox
+    current_user = socket.assigns.current_user
 
     IO.inspect(entry, label: "handle_change_alias")
     input_value = Map.get(entry, "input_value")
@@ -255,7 +257,7 @@ defmodule FlowmindWeb.ChatLive do
       "country" => country.name
     })
 
-    chat_inbox = Chat.list_chat_inbox()
+    chat_inbox = Chat.list_chat_inbox(current_user)
 
     socket =
       socket
@@ -268,13 +270,14 @@ defmodule FlowmindWeb.ChatLive do
 
   @impl true
   def handle_info({:message_created, message}, socket) do
-    IO.inspect(message, label: "message")
+    {_, message} = message
+    IO.inspect(message, label: "message_created")
     chat_history = socket.assigns.chat_history ++ [message]
 
-    IO.inspect(message, label: "mira -> message")
-    IO.inspect(message.chat_history, label: "mira -> message.chat_history")
-    IO.inspect(is_struct(message.chat_history), label: "mira -> is_struct")
-    IO.inspect(chat_history, label: "mira -> chat_history")
+    # IO.inspect(message, label: "mira -> message")
+    # IO.inspect(message.chat_history, label: "mira -> message.chat_history")
+    # IO.inspect(is_struct(message.chat_history), label: "mira -> is_struct")
+    # IO.inspect(chat_history, label: "mira -> chat_history")
 
     socket =
       socket
@@ -286,6 +289,7 @@ defmodule FlowmindWeb.ChatLive do
 
   @impl true
   def handle_info({:notify_message_delivered, message}, socket) do
+    {_, message} = message
     chat_history = socket.assigns.chat_history
 
     chat_history = List.update_at(chat_history, -1, fn _ -> message end)
@@ -299,6 +303,7 @@ defmodule FlowmindWeb.ChatLive do
 
   @impl true
   def handle_info({:notify_message_readed, message}, socket) do
+    {_, message} = message
     IO.inspect(message, label: "notify_message_readed")
 
     chat_history = socket.assigns.chat_history
@@ -336,7 +341,7 @@ defmodule FlowmindWeb.ChatLive do
 
     chat_history = Chat.list_chat_history(sender_phone_number)
 
-    IO.inspect(chat_history, label: "chat_history")
+    # IO.inspect(chat_history, label: "chat_history")
 
     was_readed = if is_nil(inbox), do: true, else: inbox.readed
 
@@ -347,8 +352,8 @@ defmodule FlowmindWeb.ChatLive do
     if !is_nil(inbox), do: Chat.update_chat_inbox(inbox, %{"readed" => true})
 
     if connected?(socket) do
-      ChatPubsub.unsubscribe(old_sender_phone_number)
-      ChatPubsub.subscribe(sender_phone_number)
+      ChatPubsub.unsubscribe(old_sender_phone_number, phone_number_id)
+      ChatPubsub.subscribe(sender_phone_number, phone_number_id)
     end
 
     # IO.inspect(chat_history, label: "chat_history")
@@ -392,7 +397,7 @@ defmodule FlowmindWeb.ChatLive do
 
             <.live_component
               module={FlowmindWeb.ChatBubbleContent}
-              id={"live-component-#{chat.id}"}
+              id={"live-component-#{chat.id}-#{UUID.uuid1()}"}
               chat={chat} />
 
             <div :if={chat.source != :user} class="chat-footer opacity-50">

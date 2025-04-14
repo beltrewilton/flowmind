@@ -6,6 +6,7 @@ defmodule FlowmindWeb.UserAuth do
 
   # alias Ecto.Repo
   alias Flowmind.Accounts
+  alias Flowmind.Chat
 
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
@@ -29,7 +30,7 @@ defmodule FlowmindWeb.UserAuth do
   def log_in_user(conn, user, params \\ %{}) do
     token = Accounts.generate_user_session_token(user)
     user_return_to = get_session(conn, :user_return_to)
-  
+
     conn
     |> renew_session()
     |> put_token_in_session(token)
@@ -80,7 +81,7 @@ defmodule FlowmindWeb.UserAuth do
     if live_socket_id = get_session(conn, :live_socket_id) do
       FlowmindWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
     end
-    
+
     Flowmind.TenantGenServer.remove_tenant()
 
     conn
@@ -94,23 +95,27 @@ defmodule FlowmindWeb.UserAuth do
   and remember me token.
   """
   def fetch_current_user(conn, _opts) do
+    IO.inspect("fetch_current_user")
     {user_token, conn} = ensure_user_token(conn)
     user = user_token && Accounts.get_user_by_session_token(user_token)
     user = Flowmind.Repo.preload(user, :company)
-    tenant = get_tenant(user)
+    tenant = get_user_tenant(user)
+    IO.inspect(tenant, label: "tenant fetch_current_user")
+    user = Flowmind.Repo.preload(user, :customers, prefix: tenant)
 
-    Flowmind.TenantGenServer.put_tenant(tenant)
-    
+    Flowmind.TenantContext.put_tenant(tenant)
+
     conn
     |> assign(:current_user, user)
   end
-  
-  defp get_tenant(user) do
-    case user do
-      nil -> "not_loaded"
-      _ -> user.company.tenant
-    end
+
+  defp get_user_tenant(user) do
+    fallback_tenant(user)
   end
+
+  defp fallback_tenant(nil), do: "not_loaded"
+  defp fallback_tenant(user), do: user.company.tenant
+
 
   defp ensure_user_token(conn) do
     if token = get_session(conn, :user_token) do
@@ -190,10 +195,103 @@ defmodule FlowmindWeb.UserAuth do
     end
   end
 
+  def on_mount(
+        :ensure_admin_or_user,
+        _params,
+        _session,
+        %{assigns: %{current_user: user}} = socket
+      ) do
+    if user.role in [:admin, :user] do
+      {:cont, socket}
+    else
+      {:halt,
+       socket
+       |> Phoenix.LiveView.put_flash(:error, "fail ensure_admin_or_user")
+       |> Phoenix.LiveView.redirect(to: "/not_authorized?msg=ensure_admin_or_user")}
+    end
+  end
+
+  def on_mount(
+        :load_chat_inbox,
+        _params,
+        _session,
+        %{assigns: %{current_user: user}} = socket
+      ) do
+    chat_inbox = Chat.list_chat_inbox(user)
+
+    socket =
+      socket
+      |> Phoenix.Component.assign(:chat_inbox, chat_inbox)
+
+    {:cont, socket}
+  end
+
+  def on_mount(
+        :ensure_has_phone_number_id,
+        params,
+        _session,
+        socket
+      ) do
+    phone_number_id = Map.get(params, "phone_number_id")
+    tenant_account = Accounts.get_tenant_account_by_phone_number_id(phone_number_id)
+
+    if is_nil(tenant_account) do
+      {:halt,
+       socket
+       |> Phoenix.LiveView.put_flash(:error, "fail ensure_has_phone_number_id")
+       |> Phoenix.LiveView.redirect(to: "/not_authorized?msg=ensure_has_phone_number_id")}
+    else
+      {:cont, socket}
+    end
+  end
+
+  def on_mount(
+        :ensure_has_customer,
+        params,
+        _session,
+        %{assigns: %{current_user: user}} = socket
+      ) do
+    sender_phone_number = Map.get(params, "sender_phone_number")
+    phone_number_id = Map.get(params, "phone_number_id")
+    IO.inspect(phone_number_id, label: "phone_number_id:origin")
+
+    has_phone_number? =
+      Enum.any?(user.customers, fn customer ->
+        customer.phone_number == sender_phone_number
+      end)
+
+    if has_phone_number? do
+      {:cont, socket}
+    else
+      {:halt,
+       socket
+       |> Phoenix.LiveView.put_flash(:error, "fail ensure_has_customer")
+       |> Phoenix.LiveView.redirect(to: "/not_authorized?msg=ensure_has_customer")}
+    end
+  end
+
   defp mount_current_user(socket, session) do
+    IO.inspect("mount_current_user")
     Phoenix.Component.assign_new(socket, :current_user, fn ->
       if user_token = session["user_token"] do
-        Accounts.get_user_by_session_token(user_token)
+        user = Accounts.get_user_by_session_token(user_token) |> Flowmind.Repo.preload(:company)
+        
+        if Phoenix.LiveView.connected?(socket) do
+            FlowmindWeb.Presence.track(
+              self(),
+              "liveview_connections",
+              socket.id,
+              %{
+                user_id: user.id,
+                tenant: user.company.tenant,
+                phone_number_id: user.company.phone_number_id
+              }
+            )
+        end
+        Flowmind.TenantContext.put_tenant(user.company.tenant)
+        tenant = Flowmind.TenantContext.get_tenant()
+        IO.inspect(tenant, label: "tenant mount_current_user")
+        Flowmind.Repo.preload(user, :customers, prefix: tenant)
       end
     end)
   end
@@ -227,6 +325,18 @@ defmodule FlowmindWeb.UserAuth do
       |> redirect(to: ~p"/users/log_in")
       |> halt()
     end
+  end
+
+  def by_pass_live(conn, _opts) do
+    conn
+  end
+
+  def by_pass_live_1(conn, _opts) do
+    conn
+  end
+
+  def by_pass_live_2(conn, _opts) do
+    conn
   end
 
   defp put_token_in_session(conn, token) do

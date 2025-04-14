@@ -7,6 +7,7 @@ defmodule Flowmind.Accounts.Company do
   schema "company" do
     field :company_name, :string
     field :tenant, :string
+    field :phone_number_id, :string
   
     timestamps(type: :utc_datetime)
   end
@@ -16,7 +17,8 @@ defmodule Flowmind.Accounts.Company do
     company
     |> cast(attrs, [
       :company_name,
-      :tenant
+      :tenant,
+      :phone_number_id
     ])
     |> validate_required([
       :company_name,
