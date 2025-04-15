@@ -116,7 +116,6 @@ defmodule FlowmindWeb.UserAuth do
   defp fallback_tenant(nil), do: "not_loaded"
   defp fallback_tenant(user), do: user.company.tenant
 
-
   defp ensure_user_token(conn) do
     if token = get_session(conn, :user_token) do
       {token, conn}
@@ -222,7 +221,7 @@ defmodule FlowmindWeb.UserAuth do
     socket =
       socket
       |> Phoenix.Component.assign(:chat_inbox, chat_inbox)
-
+      
     {:cont, socket}
   end
 
@@ -272,22 +271,24 @@ defmodule FlowmindWeb.UserAuth do
 
   defp mount_current_user(socket, session) do
     IO.inspect("mount_current_user")
+
     Phoenix.Component.assign_new(socket, :current_user, fn ->
       if user_token = session["user_token"] do
         user = Accounts.get_user_by_session_token(user_token) |> Flowmind.Repo.preload(:company)
-        
+
         if Phoenix.LiveView.connected?(socket) do
-            FlowmindWeb.Presence.track(
-              self(),
-              "liveview_connections",
-              socket.id,
-              %{
-                user_id: user.id,
-                tenant: user.company.tenant,
-                phone_number_id: user.company.phone_number_id
-              }
-            )
+          FlowmindWeb.Presence.track(
+            self(),
+            "liveview_connections",
+            socket.id,
+            %{
+              user_id: user.id,
+              tenant: user.company.tenant,
+              phone_number_id: user.company.phone_number_id
+            }
+          )
         end
+
         Flowmind.TenantContext.put_tenant(user.company.tenant)
         tenant = Flowmind.TenantContext.get_tenant()
         IO.inspect(tenant, label: "tenant mount_current_user")

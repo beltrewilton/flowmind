@@ -69,7 +69,7 @@ defmodule FlowmindWeb.Router do
       layout: {FlowmindWeb.DashboardLayouts, :app},
       on_mount: [
         {FlowmindWeb.UserAuth, :ensure_authenticated},
-        {FlowmindWeb.PathSocket, :put_path_in_socket},
+        {FlowmindWeb.AttachHookUtil, :attach_hook_util},
         {FlowmindWeb.UserAuth, :load_chat_inbox}
       ] do
       live "/users/settings", UserSettingsLive, :edit
@@ -86,7 +86,7 @@ defmodule FlowmindWeb.Router do
       on_mount: [
         {FlowmindWeb.UserAuth, :ensure_authenticated},
         {FlowmindWeb.UserAuth, :ensure_admin_or_user},
-        {FlowmindWeb.PathSocket, :put_path_in_socket}
+        {FlowmindWeb.AttachHookUtil, :attach_hook_util},
       ] do
       live "/userlist", UserListLive, :index
       live "/userprofile/:id", UserProfileLive, :index
@@ -97,7 +97,7 @@ defmodule FlowmindWeb.Router do
       layout: {FlowmindWeb.DashboardLayouts, :app},
       on_mount: [
         {FlowmindWeb.UserAuth, :ensure_authenticated},
-        {FlowmindWeb.PathSocket, :put_path_in_socket},
+        {FlowmindWeb.AttachHookUtil, :attach_hook_util},
         {FlowmindWeb.UserAuth, :load_chat_inbox},
         {FlowmindWeb.UserAuth, :ensure_has_phone_number_id}
       ] do
@@ -108,7 +108,7 @@ defmodule FlowmindWeb.Router do
       layout: {FlowmindWeb.DashboardLayouts, :app},
       on_mount: [
         {FlowmindWeb.UserAuth, :ensure_authenticated},
-        {FlowmindWeb.PathSocket, :put_path_in_socket},
+        {FlowmindWeb.AttachHookUtil, :attach_hook_util},
         {FlowmindWeb.UserAuth, :load_chat_inbox},
         {FlowmindWeb.UserAuth, :ensure_has_customer}
       ] do

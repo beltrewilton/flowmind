@@ -28,6 +28,7 @@ import FileChooser from "./dispatch_file_chooser"
 import ClearInput from "./pdf_preview"
 import EditAlias from "./edit_alias"
 import SideBar from "./side_bar"
+import SideBarMenu from "./sidebar_menu"
 
 let hooks = {}
 hooks.PartnerMetaLogin = PartnerMetaLogin
@@ -37,6 +38,7 @@ hooks.FileChooser = FileChooser
 hooks.PdfPreview = PdfPreview
 hooks.EditAlias = EditAlias
 hooks.SideBar = SideBar
+hooks.SideBarMenu = SideBarMenu
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
