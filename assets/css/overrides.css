@@ -3,8 +3,10 @@
 }
 
 .sidebaropt,
-.sidebar-item {
-    transition: width 0.9s ease !important;
+.sidebar-item,
+#right-container,
+#left-container {
+    transition: width 0.4s ease !important;
     overflow: hidden;
 }
 
@@ -20,5 +22,12 @@
 
 .toggle-btn {
     transition: width 0.9s ease !important;
+    overflow: hidden;
+}
+
+.disapear-body {
+    transition: all 0.4s ease-out;
+    opacity: 0;
+    width: 0;
     overflow: hidden;
 }

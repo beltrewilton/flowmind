@@ -1,5 +1,5 @@
 <.drawer id="drawer-container-id"  class="lg:drawer-open border w-full min-h-screen" selector_id="drawer-container">
-  <:drawer_content class="pb-10 b-1 bg-base-200">
+  <:drawer_content class="h-[90vh] pb-10 b-1 bg-base-200">
     <.navbar class="bg-base-100 mb-5 shadow-xl">
     <label for="drawer-container" class="drawer-button visible md:hidden cursor-pointer btn btn-ghost transition duration-300" phx-click={JS.add_class("w-80", to: ".sidebaropt") |> JS.remove_class("hidden", to: ".sidebar-label")}>
       <.icon name="hero-bars-3"></.icon>

@@ -379,142 +379,159 @@ defmodule FlowmindWeb.ChatLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-[90vh]">
-      <div class="w-[100%]  overflow-y-auto" id="chat-messages" phx-hook="ScrolltoBottom">
-        <%= for chat <- @chat_history do %>
-          <% chat_css = if chat.source == :user, do: "chat-start", else: "chat-end"
-          face = if chat.source == :user, do: "face1", else: "face2" %>
-          <div class={"chat m-5 #{chat_css}"}>
-            <div class="chat-image avatar">
-              <div class="w-10 rounded-full">
-                <img src={"/images/#{face}.jpg"} />
-              </div>
-            </div>
-            <div class="chat-header">
-              {chat.sender_phone_number}
-              <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
-            </div>
-
-            <.live_component
-              module={FlowmindWeb.ChatBubbleContent}
-              id={"live-component-#{chat.id}-#{UUID.uuid1()}"}
-              chat={chat} />
-
-            <div :if={chat.source != :user} class="chat-footer opacity-50">
-              <div :if={chat.readed and chat.delivered}>
-                <.icon name="hero-check" class="h-5 w-5 text-green-600" />
-                <.icon name="hero-check" class="h-5 w-5 text-green-600 -ml-5" />
-              </div>
-              <.icon :if={!chat.readed and chat.delivered} name="hero-check" class="h-5 w-5 text-green-600" />
-              <.icon :if={!chat.readed and !chat.delivered} name="hero-check" class="h-5 w-5 text-gray-500" />
-            </div>
-          </div>
-        <% end %>
-      </div>
-
-      <div class="flex flex-col w-[100%] bg-gray-700 p-4 rounded-lg shadow-lg">
-        <div :if={@chat_pinned} class="chat chat-start mb-3 ml-12">
-          <div class="flex flex-row chat-bubble border-r-4 border-blue-500">
-          <.live_component
-            module={FlowmindWeb.ChatThumbnail}
-            id={"pi-app-live-component-#{@chat_pinned.id}"}
-            chat={@chat_pinned} />
-            <div phx-click="remove_chat_pinned" >
-              <.icon name="hero-x-mark" class="text-xs cursor-pointer" />
-            </div>
-          </div>
-        </div>
-        <.simple_form
-          for={@form}
-          id="chat-form"
-          phx-submit="send"
-          phx-change="validate"
-          class="grid grid-cols-[85%_15%] gap-2 w-full mt-0"
-        >
-          <div class="relative h-12">
-            <.input
-              id="chat-input"
-              phx-hook="FocusOnInputText"
-              field={@form[:message]}
-              type="text"
-              placeholder="Type a message..."
-              class="w-full border border-gray-500 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500 pr-8"
-            />
-
-            <.live_file_input upload={@uploads.avatar} class="hidden live_file_input" />
-
-            <div :for={entry <- @uploads.avatar.entries} class="absolute cursor-pointer left-10 top-0 transform -translate-y-1/2 text-white">
-              <.badge color="neutral" class="p-3">
-                <.icon name="hero-document-check" class="text-xs"/>
-                {entry.client_name}
-                <div id="close-doc-id" phx-click="remove_doc_handler" phx-value-ref={entry.ref} >
-                  <.icon name="hero-x-mark" class="text-xs"/>
+    <div class="flex h-[90vh] w-full">
+      <!-- Left Container -->
+      <div id="left-container" class="flex flex-col w-2/3">
+        <div class="w-full overflow-y-auto flex-1" id="chat-messages" phx-hook="ScrolltoBottom">
+          <%= for chat <- @chat_history do %>
+            <% chat_css = if chat.source == :user, do: "chat-start", else: "chat-end"
+            face = if chat.source == :user, do: "face1", else: "face2" %>
+            <div class={"chat m-5 #{chat_css}"}>
+              <div class="chat-image avatar">
+                <div class="w-10 rounded-full">
+                  <img src={"/images/#{face}.jpg"} />
                 </div>
-              </.badge>
-            </div>
-
-            <.dropdown direction="top" class="absolute cursor-pointer left-3 top-0 transform -translate-y-1/2 ">
-              <div id="clip-id" tabindex="0" class="text-white m-1" phx-hook="FileChooser"  >
-                <.icon name="hero-paper-clip" />
               </div>
-              <.menu tabindex="0" class="dropdown-content">
-                <:item>
-                  <label
-                    id="image-label-id"
-                    for="file-upload"
-                    phx-click="upload_handler"
-                    phx-value-filetype="image"
-                  >
-                    <.icon name="hero-camera" />
-                  </label>
-                </:item>
-                <:item>
-                  <label
-                    id="audio-label-id"
-                    for="file-upload"
-                    phx-click="upload_handler"
-                    phx-value-filetype="audio"
-                  >
-                    <.icon name="hero-microphone" />
-                  </label>
-                </:item>
-                <:item>
-                  <label
-                    id="video-label-id"
-                    for="file-upload"
-                    phx-click="upload_handler"
-                    phx-value-filetype="video"
-                  >
-                    <.icon name="hero-video-camera" />
-                  </label>
-                </:item>
-                <:item>
-                  <label
-                    id="document-label-id"
-                    for="file-upload"
-                    phx-click="upload_handler"
-                    phx-value-filetype="document"
-                  >
-                    <.icon name="hero-document" />
-                  </label>
-                </:item>
-              </.menu>
-            </.dropdown>
-
+              <div class="chat-header">
+                {chat.sender_phone_number}
+                <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
+              </div>
+  
+              <.live_component
+                module={FlowmindWeb.ChatBubbleContent}
+                id={"live-component-#{chat.id}-#{UUID.uuid1()}"}
+                chat={chat} />
+  
+              <div :if={chat.source != :user} class="chat-footer opacity-50">
+                <div :if={chat.readed and chat.delivered} >
+                  <.icon name="hero-check" class="h-5 w-5 text-blue-700" />
+                  <.icon name="hero-check" class="h-5 w-5 text-blue-700 -ml-5" />
+                </div>
+                <.icon :if={!chat.readed and chat.delivered} name="hero-check" class="h-5 w-5 text-blue-700" />
+                <.icon :if={!chat.readed and !chat.delivered} name="hero-check" class="h-5 w-5 text-gray-500" />
+              </div>
+            </div>
+          <% end %>
+        </div>
+  
+        <div class="flex flex-col w-full bg-gray-700 p-4 rounded-lg shadow-lg">
+          <div :if={@chat_pinned} class="chat chat-start mb-3 ml-12">
+            <div class="flex flex-row chat-bubble border-r-4 border-blue-500">
+            <.live_component
+              module={FlowmindWeb.ChatThumbnail}
+              id={"pi-app-live-component-#{@chat_pinned.id}"}
+              chat={@chat_pinned} />
+              <div phx-click="remove_chat_pinned" >
+                <.icon name="hero-x-mark" class="text-xs cursor-pointer" />
+              </div>
+            </div>
           </div>
-
-          <:actions>
-            <.button
-              id="send-button-id"
-              phx-disable-with="sending..."
-              phx-click={JS.set_attribute({"value", ""}, to: "#chat-input")}
-              class="w-full mt-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 transition duration-300"
-            >
-              <.icon name="hero-paper-airplane" />
-            </.button>
-          </:actions>
-        </.simple_form>
+          <.simple_form
+            for={@form}
+            id="chat-form"
+            phx-submit="send"
+            phx-change="validate"
+            class="grid grid-cols-[85%_15%] gap-2 w-full mt-0"
+          >
+            <div class="relative h-12">
+              <.input
+                id="chat-input"
+                phx-hook="FocusOnInputText"
+                field={@form[:message]}
+                type="text"
+                placeholder="Type a message..."
+                class="w-full border border-gray-500 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500 pr-8"
+              />
+  
+              <.live_file_input upload={@uploads.avatar} class="hidden live_file_input" />
+  
+              <div :for={entry <- @uploads.avatar.entries} class="absolute cursor-pointer left-10 top-0 transform -translate-y-1/2 text-white">
+                <.badge color="neutral" class="p-3">
+                  <.icon name="hero-document-check" class="text-xs"/>
+                  {entry.client_name}
+                  <div id="close-doc-id" phx-click="remove_doc_handler" phx-value-ref={entry.ref} >
+                    <.icon name="hero-x-mark" class="text-xs"/>
+                  </div>
+                </.badge>
+              </div>
+  
+              <.dropdown direction="top" class="absolute cursor-pointer left-3 top-0 transform -translate-y-1/2 ">
+                <div id="clip-id" tabindex="0" class="text-white m-1" phx-hook="FileChooser"  >
+                  <.icon name="hero-paper-clip" />
+                </div>
+                <.menu tabindex="0" class="dropdown-content">
+                  <:item>
+                    <label
+                      id="image-label-id"
+                      for="file-upload"
+                      phx-click="upload_handler"
+                      phx-value-filetype="image"
+                    >
+                      <.icon name="hero-camera" />
+                    </label>
+                  </:item>
+                  <:item>
+                    <label
+                      id="audio-label-id"
+                      for="file-upload"
+                      phx-click="upload_handler"
+                      phx-value-filetype="audio"
+                    >
+                      <.icon name="hero-microphone" />
+                    </label>
+                  </:item>
+                  <:item>
+                    <label
+                      id="video-label-id"
+                      for="file-upload"
+                      phx-click="upload_handler"
+                      phx-value-filetype="video"
+                    >
+                      <.icon name="hero-video-camera" />
+                    </label>
+                  </:item>
+                  <:item>
+                    <label
+                      id="document-label-id"
+                      for="file-upload"
+                      phx-click="upload_handler"
+                      phx-value-filetype="document"
+                    >
+                      <.icon name="hero-document" />
+                    </label>
+                  </:item>
+                </.menu>
+              </.dropdown>
+  
+            </div>
+  
+            <:actions>
+              <.button
+                id="send-button-id"
+                phx-disable-with="sending..."
+                phx-click={JS.set_attribute({"value", ""}, to: "#chat-input")}
+                class="w-full mt-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 transition duration-300"
+              >
+                <.icon name="hero-paper-airplane" />
+              </.button>
+            </:actions>
+          </.simple_form>
+        </div>
       </div>
+      
+      <!-- Right Container -->
+      <div id="right-container" class="flex flex-col w-1/3 h-full bg-gray-800 p-4 rounded-lg shadow-lg">
+         <h2 class="text-white text-xl mb-3">
+         <.swap phx-click={JS.toggle_class("w-1/3 w-0", to: "#right-container") |> JS.toggle_class("w-2/3 w-full", to: "#left-container") |> JS.toggle_class("disapear-body", to: ".r-body")}  animation="rotate" class="-ml-3 mb-1">
+           <:swap_off type="icon" name="hero-chevron-right"/>
+           <:swap_on type="icon" name="hero-chevron-left" />
+         </.swap>
+          <span class="r-body">Right Panel</span>
+         </h2>
+         <div class="flex-1 overflow-y-auto r-body">
+           <p class="text-gray-300">You can add user list, details, or extra options here.</p>
+         </div>
+       </div>
     </div>
     """
   end

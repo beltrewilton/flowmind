@@ -1,7 +1,9 @@
 <.drawer class="lg:drawer-open border w-full h-screen" selector_id="drawer-container">
-  <:drawer_content class="pb-10 b-1 bg-base-200">
+  <:drawer_content class="h-[90vh] pb-10 b-1 bg-base-200">
     <.navbar class="bg-base-100 mb-1 shadow-xs">
-    <label for="drawer-container" class="btn btn-primary drawer-button">Open drawer</label>
+    <label for="drawer-container" class="drawer-button visible md:hidden cursor-pointer btn btn-ghost transition duration-300" phx-click={JS.add_class("w-80", to: ".sidebaropt")}>
+      <.icon name="hero-bars-3"></.icon>
+    </label>
       <div class="flex-1">
         <div :if={!@edit_alias}>
           <a :if={is_nil(@alias_name)} phx-click="handle_edit_alias" class="btn btn-ghost text-xl">{@sender_phone_number}</a>
@@ -69,18 +71,18 @@
     {@inner_content}
   </:drawer_content>
   <:drawer_side class="h-full absolute border-r">
-    <.menu class="bg-base-100 text-base-content min-h-full w-80 p-4">
+    <.menu id="menu-side-bar-id" class="sidebaropt bg-base-100 text-base-content min-h-full w-80 pl-0 p-4">
       <:item>
         <div class="flex col-2">
           <.link href="/dashboard">
-            <.icon name="hero-arrow-uturn-left" />
+            <.icon class="ml-0" name="hero-arrow-uturn-left" />
           </.link>
           <h2 class="menu-title">Chats</h2>
         </div>
       </:item>
       <:item>
         <details open>
-          <summary><.icon name="hero-inbox-arrow-down" />All</summary>
+          <summary><.icon class="ml-0" name="hero-inbox-arrow-down" />All</summary>
           <ul>
             <%= for inbox <- @chat_inbox do %>
               <li>
