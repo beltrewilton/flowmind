@@ -47,10 +47,10 @@ defmodule FlowmindWeb.AttachHookUtil do
     Mem.add_user_preference(user.id, "width", width)
     Mem.add_user_preference(user.id, "display", display)
 
-    socket =
-      socket
-      |> Phoenix.Component.assign(:width, width)
-      |> Phoenix.Component.assign(:display, display)
+    # socket =
+    #   socket
+    #   |> Phoenix.Component.assign(:width, width)
+    #   |> Phoenix.Component.assign(:display, display)
 
     {:halt, socket}
   end
