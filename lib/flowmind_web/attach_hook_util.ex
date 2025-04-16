@@ -1,17 +1,23 @@
 defmodule FlowmindWeb.AttachHookUtil do
   alias Flowmind.Accounts
-  
+  alias Phoenix.LiveView.JS
+  alias Flowmind.Data.Mem 
+
   @doc """
   Sets the path from the connection as :current_path on the socket
   """
   def on_mount(:attach_hook_util, _params, _session, socket) do
-    current_user = socket.assigns.current_user
-    default_attrs = %{"preference" => %{"expanded" => true, "expanded_w" => "w-80"}}
-    {:ok, current_user} = if is_nil(current_user.preference), do: Accounts.update_user_preference(current_user, default_attrs), else: {:ok, current_user}
+    user = socket.assigns.current_user
+    width = if is_nil(Mem.get_user_preference(user.id, "width")), do: "w-80", else: Mem.get_user_preference(user.id, "width")
+    display = if is_nil(Mem.get_user_preference(user.id, "display")), do: "block", else: Mem.get_user_preference(user.id, "display")
     
+    Mem.add_user_preference(user.id, "width", width)
+    Mem.add_user_preference(user.id, "display", display)
+
     socket =
       socket
-      |> Phoenix.Component.assign(:current_user, current_user)
+      |> Phoenix.Component.assign(:width, width)
+      |> Phoenix.Component.assign(:display, display)
       |> Phoenix.LiveView.attach_hook(
         :toggle_drawer,
         :handle_event,
@@ -33,25 +39,21 @@ defmodule FlowmindWeb.AttachHookUtil do
   end
 
   def toggle_drawer_event("toggle_drawer", _data, socket) do
-    current_user = socket.assigns.current_user
-    preference = current_user.preference || %{}
-    IO.inspect(preference, label: "Preference")
-    expanded = Map.get(preference, "expanded", false)
-    expanded_w = Map.get(preference, "expanded_w", "w-80")
-
-    new_expanded = !expanded
-    new_expanded_w = if expanded_w == "w-80", do: "w-15", else: "w-80"
-
-    attrs = %{"preference" => %{"expanded" => new_expanded, "expanded_w" => new_expanded_w}}
-
-    {:ok, current_user} = Accounts.update_user_preference(current_user, attrs)
+    user = socket.assigns.current_user
+    
+    width = if Mem.get_user_preference(user.id, "width") == "w-80", do: "w-12", else: "w-80"
+    display = if Mem.get_user_preference(user.id, "display") == "block", do: "hidden", else: "block"
+    
+    Mem.add_user_preference(user.id, "width", width)
+    Mem.add_user_preference(user.id, "display", display)
 
     socket =
       socket
-      |> Phoenix.Component.assign(:current_user, current_user)
+      |> Phoenix.Component.assign(:width, width)
+      |> Phoenix.Component.assign(:display, display)
 
     {:halt, socket}
   end
-  
+
   def toggle_drawer_event(_event, _params, socket), do: {:cont, socket}
 end
