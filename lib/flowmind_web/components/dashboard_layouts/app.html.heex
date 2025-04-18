@@ -49,7 +49,7 @@
     </.navbar>
     {@inner_content}
   </:drawer_content>
-  <:drawer_side class="h-full absolute border-r" id="drawer-side-bar-id">
+  <:drawer_side class="h-full absolute border-r z-20" id="drawer-side-bar-id">
       <.swap  phx-click={JS.toggle_class("w-80 w-12", to: ".sidebaropt") |> JS.toggle_class("hidden", to: ".sidebar-label") |> JS.push("toggle_drawer")}  animation="rotate" class="pl-3 pt-5">
         <:swap_off type="icon" name="hero-x-mark"/>
         <:swap_on type="icon" name="hero-bars-3" />

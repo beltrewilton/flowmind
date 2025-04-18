@@ -68,46 +68,70 @@ defmodule FlowmindWeb.UserProfileLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col items-center gap-5 w-full">
-      <h2>{@user.name}</h2>
-    </div>
-
-    <.simple_form
-      for={@form}
-      id="customer-list-form"
-      phx-submit="send"
-      class=""
-    >
-    <%= for customer <- @customers do %>
-      <div  class="flex flex-row items-center space-x-4 p-2">
-        <div>
-          <.input name="entry_form[customer_ids][]" value={customer.id} checked={!!customer.checked}  id={"inputs-checkbox-#{customer.id}"} placeholder="Checkbox input" type="checkbox"/>
-        </div>
-        <a class="p-7 btn btn-ghost text-xl flex flex-col items-start">
-          {customer.name}
-          <.badge size="xs" class="-mt-2 -ml-1">
-            <div class="w-4 h-4">
-              <img
-                src={"data:image/png;base64,#{CountryLookup.lookup_by_code(customer.phone_number).flag_image}"}
-                alt="flag"
-                class="w-full h-full object-contain"
-              />
-            </div>
-            {customer.phone_number}
-          </.badge>
-        </a>
-      </div>
-    <% end %>
-    <:actions>
-      <.button
-        id="send-customer-button-id"
-        phx-disable-with="sending..."
-        class="w-full mt-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 transition duration-300"
+    <.breadcrumbs class="pl-5">
+      <:item icon="hero-users"><.link patch={~p"/userlist"}>Users</.link></:item>
+      <:item >List of assigns customers</:item>
+    </.breadcrumbs>
+    
+    <div class="p-5">
+      <.simple_form
+        for={@form}
+        id="customer-list-form"
+        phx-submit="send"
+        class=""
       >
-        <.icon name="hero-paper-airplane" />
-      </.button>
-    </:actions>
-    </.simple_form>
+      <div class="flex col-2">
+        <.avatar class="mb-1">
+          <div class="mask mask-squircle w-16">
+            <img src={"https://i.pravatar.cc/150?u=#{@user.id}"} />
+          </div>
+        </.avatar>
+        <div class="pl-5">
+          <h2>{@user.name}</h2>
+          <h2>{@user.email}</h2>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div>Customer List</div>
+      <%= for customer <- @customers do %>
+        <.list class="hover:bg-gray-200 cursor-pointer transition duration-300">
+          <:item >
+            <div><img class="size-10 rounded-box" src={"https://i.pravatar.cc/150?u=#{customer.phone_number}"}/></div>
+            <div>
+              <div>{customer.name}</div>
+              <div class="text-xs uppercase font-semibold opacity-60">
+                <.badge size="xs" class="-mt-2 -ml-1">
+                  <div class="w-4 h-4">
+                    <img
+                      src={"data:image/png;base64,#{CountryLookup.lookup_by_code(customer.phone_number).flag_image}"}
+                      alt="flag"
+                      class="w-full h-full object-contain"
+                    />
+                  </div>
+                  {customer.phone_number}
+                </.badge>
+              </div>
+            </div>
+            <.button shape="square" ghost>
+              <.input name="entry_form[customer_ids][]" value={customer.id} checked={!!customer.checked}  id={"inputs-checkbox-#{customer.id}"} placeholder="Checkbox input" type="checkbox"/>
+            </.button>
+          </:item>
+        </.list>
+      <% end %>
+      <:actions>
+       
+        
+        <div class="flex justify-end w-full">
+          <.button  
+            id="send-customer-button-id"
+            phx-disable-with="saving..." color="primary" class="w-1/4 mt-4 hover:bg-blue-600 transition duration-300">
+            Save assigns
+            <.icon name="hero-cloud-arrow-up" />
+          </.button>
+        </div>
+      </:actions>
+      </.simple_form>
+    </div>
     """
   end
 end

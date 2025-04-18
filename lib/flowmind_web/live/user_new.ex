@@ -21,13 +21,13 @@ defmodule FlowmindWeb.UserNewLive do
     {:ok, socket}
   end
   
-  def handle_event("send", entry_form, socket) do
+  def handle_event("send", user_form, socket) do
     current_user = socket.assigns.current_user
-    entry_form = Map.get(entry_form, "entry_form")
-    entry_form = entry_form |> Map.put("role", :employee)
-    IO.inspect(entry_form, label: "entry_form")
+    user_form = Map.get(user_form, "user_form")
+    user_form = user_form |> Map.put("role", :employee)
+    IO.inspect(user_form, label: "user_form")
     
-    {:ok, user} = Accounts.register_user(entry_form)
+    {:ok, user} = Accounts.register_user(user_form)
     Accounts.update_user_company(user, current_user.company)
     
     {:ok, _} =
@@ -43,43 +43,78 @@ defmodule FlowmindWeb.UserNewLive do
     {:noreply, socket}
   end
   
-  def handle_event("validate", %{"entry_form" => entry_form}, socket) do
-    changeset = Accounts.change_user_registration(%User{}, entry_form)
+  def handle_event("validate", %{"user_form" => user_form}, socket) do
+    changeset = Accounts.change_user_registration(%User{}, user_form)
 
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
   
   @impl true
-  def handle_params(_params, _url, socket) do
+  def handle_params(params, _url, socket) do
+    IO.inspect(params, label: ">params")
     {:noreply, socket}
   end
   
   defp assign_form(socket, %{} = source) do
-    assign(socket, :form, to_form(source, as: "entry_form"))
+    assign(socket, :form, to_form(source, as: "user_form"))
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    User new
-    <div class="flex flex-col items-center gap-5 w-full">
+    <.breadcrumbs class="pl-5">
+      <:item icon="hero-users"><.link patch={~p"/userlist"}>Users</.link></:item>
+      <:item >Add New User</:item>
+    </.breadcrumbs>
+    <div class="p-5">
+      <div class="text-xl mb-4">Add New User</div>
       <.simple_form
         for={@form}
         id="user-new-form"
         phx-submit="send"
         phx-change="validate"
-        class=""
+        class="w-full"
       >
-        <.fieldset class="w-full p-5">
-          <.fieldset_label>Name</.fieldset_label>
-          <.input field={@form[:name]} type="text" placeholder="Name" required />
-          <.fieldset_label>Email</.fieldset_label>
-          <.input field={@form[:email]} type="email" placeholder="Email" required />
-          <.fieldset_label>Password</.fieldset_label>
-          <.input field={@form[:password]} type="password" placeholder="Password" required />
-        </.fieldset>
+          <.avatar class="mb-1">
+            <div class="mask mask-squircle w-16">
+              <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+            </div>
+          </.avatar>
+          <div class="divider"></div>
+          <div phx-mounted={JS.focus(to: "#full-name-id")} >Personal Information</div>
+          <.live_component
+            module={FlowmindWeb.Live.InputIconComponent}
+            id="input-full-name-id"
+            form={@form}
+            formvar={:name}
+            icon_name="hero-user"
+            ilabel="Full name"
+            iid="full-name-id"
+            />
+          <.live_component
+            module={FlowmindWeb.Live.InputIconComponent}
+            id="input-email-id"
+            form={@form}
+            formvar={:email}
+            icon_name="hero-envelope"
+            ilabel="Email"
+            />
+          <.live_component
+            module={FlowmindWeb.Live.InputIconComponent}
+            id="input-password-id"
+            form={@form}
+            formvar={:password}
+            icon_name="hero-key"
+            ilabel="Password"
+            itype="password"
+            />
         <:actions>
-          <.button class="btn btn-primary mt-4">Save</.button>
+          <div class="flex justify-end w-full">
+            <.button color="primary" class="w-1/4 mt-4 hover:bg-blue-600 transition duration-300">
+              Save
+              <.icon name="hero-cloud-arrow-up" />
+            </.button>
+          </div>
         </:actions>
       </.simple_form>
     </div>
