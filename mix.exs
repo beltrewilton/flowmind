@@ -67,6 +67,11 @@ defmodule Flowmind.MixProject do
       {:plug_cowboy, "~> 2.7.2"},
       {:triplex, "~> 1.3.0"},
       {:corsica, "~> 2.1"},
+      {:langchain, "~> 0.3.2"},
+      {:pgvector, "~> 0.3.0"},
+      {:bumblebee, "~> 0.6.0"},
+      {:exla, "~> 0.9.2"},
+      {:text_chunker, "~> 0.3.2"},
       {:daisy_ui_components, "~> 0.8"},
       {:whatsappx, path: whatsappx_path},
       {:country_lookup, "~> 0.0.2"}

@@ -8,6 +8,8 @@ defmodule FlowmindWeb.ChatLiveHelper do
     current_path = socket.assigns.current_path
     chat_history = socket.assigns.chat_history
     {_, message} = message
+    
+    chat_inbox = if length(chat_inbox) > 0, do: chat_inbox, else: [message]
   
     sender_phone_number = message.sender_phone_number
     phone_number_id = message.phone_number_id
@@ -22,15 +24,16 @@ defmodule FlowmindWeb.ChatLiveHelper do
         else: chat_inbox
 
     phone_number_id = message.phone_number_id
-
-    IO.inspect(message, label: "refresh_inbox chat_inbox")
     
     inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
+    
+    IO.inspect(chat_inbox, label: "**refresh_inbox chat_inbox")
+    IO.inspect(inbox, label: "**refresh_inbox inbox")
 
     socket =
       socket
       |> Phoenix.Component.assign(chat_inbox: chat_inbox)
-      |> Phoenix.Component.assign(:alias_name, inbox.alias)
+      |> Phoenix.Component.assign(:alias_name, inbox && inbox.alias || nil)
       |> Phoenix.Component.assign(phone_number_id: phone_number_id)
       
     {:noreply, socket}

@@ -21,12 +21,12 @@ export default PartnerMetaLogin = {
     );
 
     // Define the login callback function
-    const fbLoginCallback = (response) => {
-      this.pushEvent("dummy_event", {'data': 'mega dummy'});
+    const fbLoginCallback = (response) => {      
+      console.log('response: ', response); // remove after testing
       
       if (response.authResponse) {
         const code = response.authResponse.code;
-        console.log('response: ', code); // remove after testing
+        console.log('code: ', code); // remove after testing
         // TODO: Send the code to the server then from server to FB
         this.pushEvent("fb_login_success", { response });
       }
@@ -37,14 +37,16 @@ export default PartnerMetaLogin = {
       );
     };
 
-    this.el.addEventListener("click", () => {
+    this.el.addEventListener("click", (event) => {
+      console.log("addEventListener: ", event);
+      
       FB.login(fbLoginCallback, {
         config_id: "356255260651856",
         response_type: "code",
         override_default_response_type: true,
         extras: {
           setup: {},
-          featureType: "",
+          featureType: "whatsapp_business_app_onboarding",
           sessionInfoVersion: "3",
         },
       });
@@ -59,9 +61,12 @@ export default PartnerMetaLogin = {
       }
       try {
         const data = JSON.parse(event.data);
+      
+        console.log("data: ", data)  
+      
         if (data.type === "WA_EMBEDDED_SIGNUP") {
-          if (data.event === "FINISH") {
-            this.pushEvent("whatsapp_signup_success", { data: data.data });
+          if (data.event === "FINISH" || data.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING") {
+            this.pushEvent("whatsapp_signup_success", { data: data.data, event: data.event });
           } else if (data.event === "CANCEL") {
             console.warn("Cancelled at ", data.data);
           } else if (data.event === "ERROR") {

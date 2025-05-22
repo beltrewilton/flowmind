@@ -9,10 +9,12 @@ import Config
 
 config :flowmind,
   ecto_repos: [Flowmind.Repo],
+  types: Flowmind.PostgresTypes,
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
 config :triplex,
-  repo: Flowmind.Repo
+  repo: Flowmind.Repo,
+  types: Flowmind.PostgresTypes
 
 # Configures the endpoint
 config :flowmind, FlowmindWeb.Endpoint,
@@ -33,6 +35,10 @@ config :flowmind, FlowmindWeb.Endpoint,
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
 config :flowmind, Flowmind.Mailer, adapter: Swoosh.Adapters.Local
+
+# config :flowmind, Flowmind.Repo, adapter: Flowmind.PostgrexTypes
+
+config :nx, :default_backend, EXLA.Backend
 
 # Configure esbuild (the version is required)
 config :esbuild,

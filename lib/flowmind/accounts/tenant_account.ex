@@ -8,6 +8,7 @@ defmodule Flowmind.Accounts.TenantAccount do
     field :active, :boolean, default: false
     field :connected, :boolean, default: false
     field :phone_number_id, :string
+    field :business_id, :string
     field :waba_id, :string
     field :token_exchange_code, :string
     field :access_token, :string
@@ -19,6 +20,7 @@ defmodule Flowmind.Accounts.TenantAccount do
     field :quality_rating, :string
     field :status, :string
     field :verified_name, :string
+    field :sync_event, :map
 
     timestamps(type: :utc_datetime)
   end
@@ -33,6 +35,7 @@ defmodule Flowmind.Accounts.TenantAccount do
     tenant_account
     |> cast(attrs, [
       :phone_number_id,
+      :business_id,
       :waba_id,
       :token_exchange_code,
       :access_token,
@@ -45,8 +48,9 @@ defmodule Flowmind.Accounts.TenantAccount do
       :platform_type,
       :quality_rating,
       :status,
-      :verified_name
+      :verified_name,
+      :sync_event
     ])
-    |> validate_required([:phone_number_id, :waba_id])
+    |> validate_required([:waba_id])
   end
 end

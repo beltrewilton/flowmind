@@ -1,9 +1,9 @@
 defmodule FlowmindWeb.HomeLive do
   use FlowmindWeb, :live_view
-  
+
   alias Flowmind.Accounts
   alias Flowmind.Accounts.User
-  
+
   def doc do
     "Dashboard"
   end
@@ -15,7 +15,7 @@ defmodule FlowmindWeb.HomeLive do
     tenant_accounts = Accounts.list_tenant_accounts()
 
     IO.inspect(tenant_accounts, label: "tenant_accounts")
-    
+
     socket =
       socket
       |> assign(:tenant, tenant)
@@ -42,14 +42,17 @@ defmodule FlowmindWeb.HomeLive do
   end
 
   @impl true
-  def handle_event("whatsapp_signup_success", %{"data" => data}, socket) do
+  def handle_event("whatsapp_signup_success", %{"data" => data, "event" => event}, socket) do
     IO.inspect(data, label: "WhatsApp Signup Data")
+    IO.inspect(event, label: "Signup Event")
+
     {:ok, tenant_account} = Accounts.create_tenant_account(data)
 
     socket =
       socket
       |> assign(:whatsapp_data, data)
       |> assign(:tenant_account, tenant_account)
+      |> assign(:signup_event, event)
 
     {:noreply, socket}
   end
@@ -61,10 +64,12 @@ defmodule FlowmindWeb.HomeLive do
 
   @impl true
   def handle_info(:run_code_exchange, socket) do
+    current_user = socket.assigns.current_user
     IO.inspect("run_code_exchange")
 
     tenant_account = socket.assigns[:tenant_account]
     token_exchange_code = socket.assigns[:token_exchange_code]
+    signup_event = socket.assigns[:signup_event]
 
     {_, oauth_response} = WhatsappElixir.Messages.oauth_access_token(token_exchange_code)
     access_token = oauth_response["access_token"]
@@ -75,34 +80,84 @@ defmodule FlowmindWeb.HomeLive do
         "access_token" => access_token
       })
 
-    # TODO: subscribe_apps
+    tenant = current_user.company.tenant
+
+    # TODO: subscribe_apps ISSUE ??????
     {_, subscribed_apps_response} =
-      WhatsappElixir.Messages.subscribed_apps(access_token, tenant_account.waba_id)
+      WhatsappElixir.Messages.subscribed_apps(access_token, tenant_account.waba_id, tenant)
 
     # TODO: register_phone_number
     {_, register_ph_response} =
-      WhatsappElixir.Messages.register_cust_ph(access_token, tenant_account.phone_number_id)
+      if signup_event == "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING",
+        do: {:ok, %{response: "is_business_app"}},
+        else:
+          WhatsappElixir.Messages.register_cust_ph(access_token, tenant_account.phone_number_id)
 
     {_, ph} = WhatsappElixir.Messages.fetch_phone_numbers(access_token, tenant_account.waba_id)
 
-    phone_number = ph["data"] |> Enum.find(fn d -> d["id"] == tenant_account.phone_number_id end)
+    phone_number = List.first(ph["data"])
 
     {:ok, tenant_account} =
-      Accounts.update_tenant_account(tenant_account, %{
-        "subscribed_apps_response" => subscribed_apps_response,
-        "register_ph_response" => register_ph_response,
-        "connected" => subscribed_apps_response["success"] and register_ph_response["success"],
-        "display_phone_number" => phone_number["phone_number"],
-        "platform_type" => phone_number["platform_type"],
-        "quality_rating" => phone_number["quality_rating"],
-        "status" => phone_number["status"],
-        "verified_name" => phone_number["verified_name"]
-      })
+      if signup_event == "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING",
+        do:
+          Accounts.update_tenant_account(tenant_account, %{
+            "phone_number_id" => phone_number["id"],
+            "subscribed_apps_response" => subscribed_apps_response,
+            "register_ph_response" => register_ph_response,
+            "connected" => subscribed_apps_response["success"],
+            "active" => subscribed_apps_response["success"],
+            "display_phone_number" => phone_number["display_phone_number"],
+            "platform_type" => phone_number["platform_type"],
+            "quality_rating" => phone_number["quality_rating"],
+            "status" => phone_number["status"],
+            "verified_name" => phone_number["verified_name"]
+          }),
+        else:
+          Accounts.update_tenant_account(tenant_account, %{
+            "subscribed_apps_response" => subscribed_apps_response,
+            "register_ph_response" => register_ph_response,
+            "connected" =>
+              subscribed_apps_response["success"] and register_ph_response["success"],
+            "active" => subscribed_apps_response["success"] and register_ph_response["success"],
+            "display_phone_number" => phone_number["phone_number"],
+            "platform_type" => phone_number["platform_type"],
+            "quality_rating" => phone_number["quality_rating"],
+            "status" => phone_number["status"],
+            "verified_name" => phone_number["verified_name"]
+          })
+
+    Process.send_after(self(), {:run_state_sync, %{"sync_type" => "smb_app_state_sync"}}, 5_000)
+
+    Process.send_after(self(), {:run_state_sync, %{"sync_type" => "history"}}, 10_000)
 
     socket =
       socket
       |> assign(:tenant_account, tenant_account)
       |> assign(:access_token, access_token)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:run_state_sync, %{"sync_type" => sync_type}}, socket) do
+    tenant_account = socket.assigns[:tenant_account]
+    access_token = socket.assigns[:access_token]
+
+    {_, %{"request_id" => request_id, "success" => success}} =
+      WhatsappElixir.Messages.synchronization(access_token, tenant_account.phone_number_id, sync_type)
+      
+      {:ok, tenant_account} =
+            Accounts.update_tenant_account(tenant_account, %{
+              "sync_event" => %{
+                "request_id" => request_id,
+                "success" => success,
+                "sync_type" => sync_type
+              }
+            })
+
+    socket =
+      socket
+      |> assign(:tenant_account, tenant_account)
 
     {:noreply, socket}
   end

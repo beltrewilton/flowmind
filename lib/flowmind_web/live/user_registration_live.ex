@@ -62,10 +62,11 @@ defmodule FlowmindWeb.UserRegistrationLive do
   end
 
   def handle_event("save", %{"user_company" => user_company_params}, socket) do
+    Triplex.create(user_company_params["company"]["tenant"])
+    
     case Accounts.create_company(user_company_params["company"]) do
       {:ok, company} ->
         user_company_params = Map.put(user_company_params, "company_id", company.id)
-        Triplex.create(user_company_params["company"]["tenant"])
         insert_user(user_company_params, socket)
 
       {:error, %Ecto.Changeset{} = changeset} ->

@@ -8,6 +8,7 @@ defmodule Flowmind.Chat do
 
   alias Flowmind.Chat.ChatHistory
   alias Flowmind.Organization
+  alias Flowmind.Accounts
   alias Flowmind.Accounts.User
 
   @doc """
@@ -237,7 +238,10 @@ defmodule Flowmind.Chat do
       nil ->
         attrs = Map.put(attrs, "seed", UUID.uuid1())
 
-        Organization.create_customer(%{phone_number: attrs["sender_phone_number"]})
+        {_, customer} = Organization.create_customer(%{phone_number: attrs["sender_phone_number"]})
+        
+        user = Accounts.get_users_by_tenant(tenant)
+        Accounts.update_user_customers(user, [customer])
 
         %ChatInbox{}
         |> ChatInbox.changeset(attrs)
