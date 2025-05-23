@@ -1,8 +1,10 @@
 defmodule Flowmind.EmbeddingGenserver do
   use GenServer
 
-  # @model_id "nomic-ai/nomic-embed-text-v2-moe"
-  @model_id "sentence-transformers/all-MiniLM-L6-v2"
+  @model_id "nomic-ai/nomic-embed-text-v2-moe"
+  @sequence_length 512
+  @batch_size 1
+  # @model_id "sentence-transformers/all-MiniLM-L6-v2"
   # Client API
   #
   def start_link(_) do
@@ -24,24 +26,31 @@ defmodule Flowmind.EmbeddingGenserver do
 
   @impl true
   def handle_continue(:model_loader, _state) do
-    {:ok, model} = Bumblebee.load_model({:hf, @model_id})
-    {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, @model_id})
+    {:ok, model} =
+      Bumblebee.load_model({:hf, @model_id},
+        module: Bumblebee.Text.Roberta,
+        architecture: :base
+      )
 
-    IO.puts("Model [nomic-embed-text-v2-moe] loaded ⚡️")
+    {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, @model_id}, type: :roberta)
+    
+    
+    serving =
+      Bumblebee.Text.text_embedding(model, tokenizer,
+        output_attribute: :hidden_state,
+        output_pool: :mean_pooling,
+        embedding_processor: :l2_norm,
+        compile: [batch_size: @batch_size, sequence_length: @sequence_length]
+      )
 
-    {:noreply, %{model: model, tokenizer: tokenizer}}
+    IO.puts("Model [#{@model_id}] loaded ⚡️")
+
+    {:noreply, %{serving: serving}}
   end
 
   @impl true
   def handle_call({:embed, input}, _from, state) do
-    serving =
-      Bumblebee.Text.text_embedding(state.model, state.tokenizer,
-        output_attribute: :hidden_state,
-        output_pool: :mean_pooling,
-        embedding_processor: :l2_norm
-      )
-
-    embedding = for v <- Nx.Serving.run(serving, input), do: v[:embedding]
+    embedding = for v <- Nx.Serving.run(state.serving, input), do: v[:embedding]
 
     {:reply, embedding, state}
   end

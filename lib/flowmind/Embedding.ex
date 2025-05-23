@@ -35,12 +35,12 @@ defmodule Flowmind.Embedding do
 
   def ingest(input, task) when is_binary(input), do: ingest([input], task)
 
-  def ingest(input, task) do
+  def ingest(input, task \\ "search_document") do
     tenant = Flowmind.TenantContext.get_tenant()
 
     input_mask =
-      # input |> Stream.map(fn i -> "#{task}: #{i}" end) |> Enum.to_list()
-      input |> Stream.map(fn i -> i end) |> Enum.to_list()
+      input |> Stream.map(fn i -> "#{task}: #{i}" end) |> Enum.to_list()
+      # input |> Stream.map(fn i -> i end) |> Enum.to_list()
 
     embedding = EmbeddingGenserver.embed(input_mask)
 
@@ -55,14 +55,34 @@ defmodule Flowmind.Embedding do
     tenant = Flowmind.TenantContext.get_tenant()
     IO.inspect("#{task}: #{text}")
     [embedding] = EmbeddingGenserver.embed("#{task}: #{text}")
-    [embedding] = EmbeddingGenserver.embed(text)
+    # [embedding] = EmbeddingGenserver.embed(text)
     
     Repo.all(
       from d in Document,
         prefix: ^tenant,
-        select: d.text,
+        select: {fragment("1 - (? <=> ?::vector)", d.embedding, ^embedding), d.text},
         order_by: cosine_distance(d.embedding, ^embedding),
         limit: ^k
     )
   end
+  
+  def import_embedded_documents do
+    tenant = Flowmind.TenantContext.get_tenant()
+  
+    %Postgrex.Result{:rows => rows} =
+      Ecto.Adapters.SQL.query!(Repo, "SELECT text FROM ceidy.documents_copy", [])
+    
+  
+    Enum.each(rows, fn [text] ->
+      [embedding] = EmbeddingGenserver.embed(["search_document: #{text}"])
+  
+      %Flowmind.Embed.Document{}
+      |> Flowmind.Embed.Document.changeset(%{
+        text: text,
+        embedding: embedding
+      })
+      |> Repo.insert!(prefix: tenant)
+    end)
+  end
+
 end
