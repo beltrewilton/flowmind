@@ -39,8 +39,8 @@ defmodule Flowmind.Embedding do
     tenant = Flowmind.TenantContext.get_tenant()
 
     input_mask =
-      input |> Stream.map(fn i -> "#{task}: #{i}" end) |> Enum.to_list()
-      # input |> Stream.map(fn i -> i end) |> Enum.to_list()
+      # input |> Stream.map(fn i -> "#{task}: #{i}" end) |> Enum.to_list()
+      input |> Stream.map(fn i -> i end) |> Enum.to_list()
 
     embedding = EmbeddingGenserver.embed(input_mask)
 
@@ -53,9 +53,9 @@ defmodule Flowmind.Embedding do
 
   def retrieve(text, task \\ "search_query", k \\ 3) do
     tenant = Flowmind.TenantContext.get_tenant()
-    IO.inspect("#{task}: #{text}")
-    [embedding] = EmbeddingGenserver.embed("#{task}: #{text}")
-    # [embedding] = EmbeddingGenserver.embed(text)
+    # IO.inspect("#{task}: #{text}")
+    # [embedding] = EmbeddingGenserver.embed("#{task}: #{text}")
+    [embedding] = EmbeddingGenserver.embed(text)
     
     Repo.all(
       from d in Document,
@@ -74,7 +74,7 @@ defmodule Flowmind.Embedding do
     
   
     Enum.each(rows, fn [text] ->
-      [embedding] = EmbeddingGenserver.embed(["search_document: #{text}"])
+      [embedding] = EmbeddingGenserver.embed(text)
   
       %Flowmind.Embed.Document{}
       |> Flowmind.Embed.Document.changeset(%{

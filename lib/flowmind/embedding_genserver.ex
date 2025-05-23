@@ -1,7 +1,7 @@
 defmodule Flowmind.EmbeddingGenserver do
   use GenServer
 
-  @model_id "nomic-ai/nomic-embed-text-v2-moe"
+  @model_id "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
   @sequence_length 512
   @batch_size 1
   # @model_id "sentence-transformers/all-MiniLM-L6-v2"
@@ -27,20 +27,17 @@ defmodule Flowmind.EmbeddingGenserver do
   @impl true
   def handle_continue(:model_loader, _state) do
     {:ok, model} =
-      Bumblebee.load_model({:hf, @model_id},
-        module: Bumblebee.Text.Roberta,
-        architecture: :base
-      )
+      Bumblebee.load_model({:hf, @model_id})
 
-    {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, @model_id}, type: :roberta)
+    {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, @model_id})
     
     
     serving =
       Bumblebee.Text.text_embedding(model, tokenizer,
         output_attribute: :hidden_state,
         output_pool: :mean_pooling,
-        embedding_processor: :l2_norm,
-        compile: [batch_size: @batch_size, sequence_length: @sequence_length]
+        embedding_processor: :l2_norm
+        # compile: [batch_size: @batch_size, sequence_length: @sequence_length]
       )
 
     IO.puts("Model [#{@model_id}] loaded ⚡️")
