@@ -2,7 +2,7 @@ import Config
 
 config :flowmind, Flowmind.Repo,
   username: "drfadul",
-  password: "dROG@dijoFadul",
+  password: "",
   hostname: "localhost",
   database: "flowmind_dev",
   stacktrace: true,
