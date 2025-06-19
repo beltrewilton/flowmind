@@ -19,7 +19,8 @@ config :flowmind, FlowmindWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json",
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
-  server: true
+  server: true,
+  secret_key_base: "MKq8mWc8cqDfC+4fHtRunX1cRhHm55t3D+fZADDtEqgmQgJPAdygAiFZ1he7acQ2"
 
 # Configures Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Flowmind.Finch
