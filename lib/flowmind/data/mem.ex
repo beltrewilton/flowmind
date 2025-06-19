@@ -22,8 +22,7 @@ defmodule Flowmind.Data.Mem do
 
     Mnesia.add_table_index(TenantTransact, :phone_number_id)
     Mnesia.add_table_index(TenantTransact, :tenant)
-    
-    
+
     Mnesia.create_table(UserPreference,
       attributes: @user_preference_fields,
       type: :ordered_set,
@@ -32,7 +31,6 @@ defmodule Flowmind.Data.Mem do
 
     Mnesia.add_table_index(UserPreference, :uder_id)
     Mnesia.add_table_index(UserPreference, :property)
-
   end
 
   def add_tenant_transact(phone_number_id, tenant) do
@@ -71,9 +69,7 @@ defmodule Flowmind.Data.Mem do
       Mnesia.delete({TenantTransact, phone_number_id})
     end)
   end
-  
-  
-  
+
   def add_user_preference(user_id, property, value) do
     Mnesia.transaction(fn ->
       Mnesia.write({

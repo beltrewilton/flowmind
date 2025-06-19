@@ -144,16 +144,20 @@ defmodule FlowmindWeb.HomeLive do
     access_token = socket.assigns[:access_token]
 
     {_, %{"request_id" => request_id, "success" => success}} =
-      WhatsappElixir.Messages.synchronization(access_token, tenant_account.phone_number_id, sync_type)
-      
-      {:ok, tenant_account} =
-            Accounts.update_tenant_account(tenant_account, %{
-              "sync_event" => %{
-                "request_id" => request_id,
-                "success" => success,
-                "sync_type" => sync_type
-              }
-            })
+      WhatsappElixir.Messages.synchronization(
+        access_token,
+        tenant_account.phone_number_id,
+        sync_type
+      )
+
+    {:ok, tenant_account} =
+      Accounts.update_tenant_account(tenant_account, %{
+        "sync_event" => %{
+          "request_id" => request_id,
+          "success" => success,
+          "sync_type" => sync_type
+        }
+      })
 
     socket =
       socket

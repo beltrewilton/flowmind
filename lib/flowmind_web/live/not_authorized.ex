@@ -21,16 +21,13 @@ defmodule FlowmindWeb.NotAuthorized do
   def render(assigns) do
     ~H"""
     <div class="flex items-center justify-center h-full w-full">
-      
       <.alert color="error" id="alert-single-alert-with-title-and-description">
         <.icon name="hero-exclamation-circle" />
         <div>
           <h3 class="font-bold text-xl">Not Authorized</h3>
-          <div  class="text-xs"></div>
+          <div class="text-xs"></div>
         </div>
-
       </.alert>
-
     </div>
     """
   end

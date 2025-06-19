@@ -7,10 +7,10 @@ defmodule Flowmind.Repo.Migrations.CreateWebLogs do
       add :source, :string
       add :response, :map
       add :waba_id, :string
-      
+
       timestamps(type: :utc_datetime)
     end
-    
+
     create index(:webhook_log, [:waba_id])
   end
 end

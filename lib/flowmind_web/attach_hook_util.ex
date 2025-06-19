@@ -1,16 +1,24 @@
 defmodule FlowmindWeb.AttachHookUtil do
   alias Flowmind.Accounts
   alias Phoenix.LiveView.JS
-  alias Flowmind.Data.Mem 
+  alias Flowmind.Data.Mem
 
   @doc """
   Sets the path from the connection as :current_path on the socket
   """
   def on_mount(:attach_hook_util, _params, _session, socket) do
     user = socket.assigns.current_user
-    width = if is_nil(Mem.get_user_preference(user.id, "width")), do: "w-80", else: Mem.get_user_preference(user.id, "width")
-    display = if is_nil(Mem.get_user_preference(user.id, "display")), do: "block", else: Mem.get_user_preference(user.id, "display")
-    
+
+    width =
+      if is_nil(Mem.get_user_preference(user.id, "width")),
+        do: "w-80",
+        else: Mem.get_user_preference(user.id, "width")
+
+    display =
+      if is_nil(Mem.get_user_preference(user.id, "display")),
+        do: "block",
+        else: Mem.get_user_preference(user.id, "display")
+
     Mem.add_user_preference(user.id, "width", width)
     Mem.add_user_preference(user.id, "display", display)
 
@@ -40,10 +48,12 @@ defmodule FlowmindWeb.AttachHookUtil do
 
   def toggle_drawer_event("toggle_drawer", _data, socket) do
     user = socket.assigns.current_user
-    
+
     width = if Mem.get_user_preference(user.id, "width") == "w-80", do: "w-12", else: "w-80"
-    display = if Mem.get_user_preference(user.id, "display") == "block", do: "hidden", else: "block"
-    
+
+    display =
+      if Mem.get_user_preference(user.id, "display") == "block", do: "hidden", else: "block"
+
     Mem.add_user_preference(user.id, "width", width)
     Mem.add_user_preference(user.id, "display", display)
 

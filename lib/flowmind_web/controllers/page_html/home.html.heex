@@ -42,17 +42,11 @@
         quasi. In deleniti eaque aut repudiandae et a id nisi.
       </p>
       <h2 class="font-bold">{Flowmind.TenantContext.get_tenant()}</h2>
-      <.link
-        :if={!@current_user}
-        href={~p"/users/register"}
-      >
+      <.link :if={!@current_user} href={~p"/users/register"}>
         <.button color="primary">Register</.button>
       </.link>
-      
-      <.link
-        :if={@current_user}
-        href={~p"/dashboard"}
-      >
+
+      <.link :if={@current_user} href={~p"/dashboard"}>
         <.button color="accent">Go to Dashboard</.button>
       </.link>
     </div>

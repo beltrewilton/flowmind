@@ -21,8 +21,8 @@ defmodule Flowmind.Application do
       FlowmindWeb.Endpoint,
       {Plug.Cowboy, scheme: :http, plug: Webhook.Router, options: [port: 7001]},
       Flowmind.TenantGenServer,
-      Flowmind.EmbeddingGenserver,
-      {Task, fn -> Flowmind.Data.Mem.start end},
+      # Flowmind.EmbeddingGenserver,
+      {Task, fn -> Flowmind.Data.Mem.start() end},
       CountryLookup
     ]
 

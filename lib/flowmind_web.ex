@@ -87,9 +87,9 @@ defmodule FlowmindWeb do
 
       # HTML escaping functionality
       import Phoenix.HTML
-      
+
       use DaisyUIComponents
-      
+
       # Core UI components
       # import FlowmindWeb.CoreComponents
 

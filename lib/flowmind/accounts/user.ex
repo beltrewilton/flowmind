@@ -12,7 +12,7 @@ defmodule Flowmind.Accounts.User do
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
     field :preference, :map, default: %{}
-    
+
     belongs_to :company, Flowmind.Accounts.Company
     has_one :employee, Flowmind.Organization.Employee, foreign_key: :user_id, references: :id
     # has_many :customers, Flowmind.Organization.Customer, foreign_key: :user_id, references: :id
@@ -20,7 +20,6 @@ defmodule Flowmind.Accounts.User do
       join_through: "users_customers",
       join_keys: [user_id: :id, customer_id: :id],
       on_replace: :delete
-
 
     timestamps(type: :utc_datetime)
   end
@@ -55,7 +54,7 @@ defmodule Flowmind.Accounts.User do
     |> validate_email(opts)
     |> validate_password(opts)
   end
-  
+
   def default_changeset(user, attrs) do
     user
     |> cast(attrs, [:email, :password, :name, :role, :company_id, :preference])
@@ -116,7 +115,7 @@ defmodule Flowmind.Accounts.User do
     |> validate_email(opts)
     |> case do
       %{changes: %{email: _}} = changeset -> changeset
-      %{} = changeset ->  add_error(changeset, :email, "did not change")
+      %{} = changeset -> add_error(changeset, :email, "did not change")
     end
   end
 

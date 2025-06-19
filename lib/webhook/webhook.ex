@@ -120,7 +120,7 @@ defmodule Webhook.Router do
     status = Keyword.get(sender, :status)
 
     IO.inspect(data.meta_request, label: "meta_request")
-    
+
     Flowmind.TenantContext.put_tenant(tenant)
 
     case status do

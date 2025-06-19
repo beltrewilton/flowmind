@@ -8,10 +8,10 @@ defmodule Flowmind.Repo.Migrations.CTAWebLogs do
       add :user_agent, :string
       add :campaign, :string
       add :waba_id, :string
-      
+
       timestamps(type: :utc_datetime)
     end
-    
+
     create index(:cta_log, [:waba_id])
   end
 end

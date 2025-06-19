@@ -170,7 +170,7 @@ defmodule Flowmind.Chat do
       [%ChatInbox{}, ...]
 
   """
-  
+
   def list_chat_inbox do
     tenant = Flowmind.TenantContext.get_tenant()
 
@@ -178,13 +178,12 @@ defmodule Flowmind.Chat do
     |> order_by(desc: :updated_at)
     |> Repo.all(prefix: tenant)
   end
-  
-  
+
   def list_chat_inbox(%User{} = user) do
     tenant = Flowmind.TenantContext.get_tenant()
-    
+
     user = Flowmind.Repo.preload(user, :customers, prefix: tenant)
-    
+
     IO.inspect(user, label: "user")
 
     phone_numbers =
@@ -238,8 +237,9 @@ defmodule Flowmind.Chat do
       nil ->
         attrs = Map.put(attrs, "seed", UUID.uuid1())
 
-        {_, customer} = Organization.create_customer(%{phone_number: attrs["sender_phone_number"]})
-        
+        {_, customer} =
+          Organization.create_customer(%{phone_number: attrs["sender_phone_number"]})
+
         user = Accounts.get_users_by_tenant(tenant)
         Accounts.update_user_customers(user, [customer])
 
@@ -270,7 +270,7 @@ defmodule Flowmind.Chat do
   """
   def update_chat_inbox(%ChatInbox{} = chat_inbox, attrs) do
     tenant = Flowmind.TenantContext.get_tenant()
-    
+
     IO.inspect(tenant, label: "update_chat_inbox:tenant")
 
     chat_inbox

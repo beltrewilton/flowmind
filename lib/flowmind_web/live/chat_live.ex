@@ -248,7 +248,7 @@ defmodule FlowmindWeb.ChatLive do
     IO.inspect(sender_phone_number)
     inbox = Enum.find(chat_inbox, fn chat -> chat.sender_phone_number == sender_phone_number end)
     inbox = Chat.update_chat_inbox(inbox, %{"alias" => input_value})
-    
+
     phone_number_id = socket.assigns.phone_number_id
     inbox |> ChatPubsub.notify(:refresh_inbox, phone_number_id)
 
@@ -396,32 +396,42 @@ defmodule FlowmindWeb.ChatLive do
                 {chat.sender_phone_number}
                 <time class="text-xs opacity-50">{NaiveDateTime.to_time(chat.inserted_at)}</time>
               </div>
-  
+
               <.live_component
                 module={FlowmindWeb.ChatBubbleContent}
                 id={"live-component-#{chat.id}-#{UUID.uuid1()}"}
-                chat={chat} />
-  
+                chat={chat}
+              />
+
               <div :if={chat.source != :user} class="chat-footer opacity-50">
-                <div :if={chat.readed and chat.delivered} >
+                <div :if={chat.readed and chat.delivered}>
                   <.icon name="hero-check" class="h-5 w-5 text-blue-700" />
                   <.icon name="hero-check" class="h-5 w-5 text-blue-700 -ml-5" />
                 </div>
-                <.icon :if={!chat.readed and chat.delivered} name="hero-check" class="h-5 w-5 text-blue-700" />
-                <.icon :if={!chat.readed and !chat.delivered} name="hero-check" class="h-5 w-5 text-gray-500" />
+                <.icon
+                  :if={!chat.readed and chat.delivered}
+                  name="hero-check"
+                  class="h-5 w-5 text-blue-700"
+                />
+                <.icon
+                  :if={!chat.readed and !chat.delivered}
+                  name="hero-check"
+                  class="h-5 w-5 text-gray-500"
+                />
               </div>
             </div>
           <% end %>
         </div>
-  
+
         <div class="flex flex-col w-full bg-gray-700 p-4 rounded-lg shadow-lg">
           <div :if={@chat_pinned} class="chat chat-start mb-3 ml-12">
             <div class="flex flex-row chat-bubble border-r-4 border-blue-500">
-            <.live_component
-              module={FlowmindWeb.ChatThumbnail}
-              id={"pi-app-live-component-#{@chat_pinned.id}"}
-              chat={@chat_pinned} />
-              <div phx-click="remove_chat_pinned" >
+              <.live_component
+                module={FlowmindWeb.ChatThumbnail}
+                id={"pi-app-live-component-#{@chat_pinned.id}"}
+                chat={@chat_pinned}
+              />
+              <div phx-click="remove_chat_pinned">
                 <.icon name="hero-x-mark" class="text-xs cursor-pointer" />
               </div>
             </div>
@@ -442,21 +452,27 @@ defmodule FlowmindWeb.ChatLive do
                 placeholder="Type a message..."
                 class="w-full border border-gray-500 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500 pr-8"
               />
-  
+
               <.live_file_input upload={@uploads.avatar} class="hidden live_file_input" />
-  
-              <div :for={entry <- @uploads.avatar.entries} class="absolute cursor-pointer left-10 top-0 transform -translate-y-1/2 text-white">
+
+              <div
+                :for={entry <- @uploads.avatar.entries}
+                class="absolute cursor-pointer left-10 top-0 transform -translate-y-1/2 text-white"
+              >
                 <.badge color="neutral" class="p-3">
-                  <.icon name="hero-document-check" class="text-xs"/>
+                  <.icon name="hero-document-check" class="text-xs" />
                   {entry.client_name}
-                  <div id="close-doc-id" phx-click="remove_doc_handler" phx-value-ref={entry.ref} >
-                    <.icon name="hero-x-mark" class="text-xs"/>
+                  <div id="close-doc-id" phx-click="remove_doc_handler" phx-value-ref={entry.ref}>
+                    <.icon name="hero-x-mark" class="text-xs" />
                   </div>
                 </.badge>
               </div>
-  
-              <.dropdown direction="top" class="absolute cursor-pointer left-3 top-0 transform -translate-y-1/2 ">
-                <div id="clip-id" tabindex="0" class="text-white m-1" phx-hook="FileChooser"  >
+
+              <.dropdown
+                direction="top"
+                class="absolute cursor-pointer left-3 top-0 transform -translate-y-1/2 "
+              >
+                <div id="clip-id" tabindex="0" class="text-white m-1" phx-hook="FileChooser">
                   <.icon name="hero-paper-clip" />
                 </div>
                 <.menu tabindex="0" class="dropdown-content">
@@ -502,9 +518,8 @@ defmodule FlowmindWeb.ChatLive do
                   </:item>
                 </.menu>
               </.dropdown>
-  
             </div>
-  
+
             <:actions>
               <.button
                 id="send-button-id"
@@ -519,19 +534,30 @@ defmodule FlowmindWeb.ChatLive do
         </div>
       </div>
       
-      <!-- Right Container -->
-      <div id="right-container" class="flex flex-col w-1/3 h-full bg-gray-800 p-4 rounded-lg shadow-lg">
-         <h2 class="text-white text-xl mb-3">
-         <.swap phx-click={JS.toggle_class("w-1/3 w-0", to: "#right-container") |> JS.toggle_class("w-2/3 w-full", to: "#left-container") |> JS.toggle_class("disapear-body", to: ".r-body")}  animation="rotate" class="-ml-3 mb-1">
-           <:swap_off type="icon" name="hero-chevron-right"/>
-           <:swap_on type="icon" name="hero-chevron-left" />
-         </.swap>
+    <!-- Right Container -->
+      <div
+        id="right-container"
+        class="flex flex-col w-1/3 h-full bg-gray-800 p-4 rounded-lg shadow-lg"
+      >
+        <h2 class="text-white text-xl mb-3">
+          <.swap
+            phx-click={
+              JS.toggle_class("w-1/3 w-0", to: "#right-container")
+              |> JS.toggle_class("w-2/3 w-full", to: "#left-container")
+              |> JS.toggle_class("disapear-body", to: ".r-body")
+            }
+            animation="rotate"
+            class="-ml-3 mb-1"
+          >
+            <:swap_off type="icon" name="hero-chevron-right" />
+            <:swap_on type="icon" name="hero-chevron-left" />
+          </.swap>
           <span class="r-body">Right Panel</span>
-         </h2>
-         <div class="flex-1 overflow-y-auto r-body">
-           <p class="text-gray-300">You can add user list, details, or extra options here.</p>
-         </div>
-       </div>
+        </h2>
+        <div class="flex-1 overflow-y-auto r-body">
+          <p class="text-gray-300">You can add user list, details, or extra options here.</p>
+        </div>
+      </div>
     </div>
     """
   end

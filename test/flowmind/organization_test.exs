@@ -21,7 +21,11 @@ defmodule Flowmind.OrganizationTest do
     end
 
     test "create_employee/1 with valid data creates a employee" do
-      valid_attrs = %{status: "some status", job_title: "some job_title", department: "some department"}
+      valid_attrs = %{
+        status: "some status",
+        job_title: "some job_title",
+        department: "some department"
+      }
 
       assert {:ok, %Employee{} = employee} = Organization.create_employee(valid_attrs)
       assert employee.status == "some status"
@@ -35,7 +39,12 @@ defmodule Flowmind.OrganizationTest do
 
     test "update_employee/2 with valid data updates the employee" do
       employee = employee_fixture()
-      update_attrs = %{status: "some updated status", job_title: "some updated job_title", department: "some updated department"}
+
+      update_attrs = %{
+        status: "some updated status",
+        job_title: "some updated job_title",
+        department: "some updated department"
+      }
 
       assert {:ok, %Employee{} = employee} = Organization.update_employee(employee, update_attrs)
       assert employee.status == "some updated status"
@@ -66,7 +75,15 @@ defmodule Flowmind.OrganizationTest do
 
     import Flowmind.OrganizationFixtures
 
-    @invalid_attrs %{name: nil, status: nil, phone_number: nil, email: nil, avatar: nil, document_id: nil, note: nil}
+    @invalid_attrs %{
+      name: nil,
+      status: nil,
+      phone_number: nil,
+      email: nil,
+      avatar: nil,
+      document_id: nil,
+      note: nil
+    }
 
     test "list_customers/0 returns all customers" do
       customer = customer_fixture()
@@ -79,7 +96,15 @@ defmodule Flowmind.OrganizationTest do
     end
 
     test "create_customer/1 with valid data creates a customer" do
-      valid_attrs = %{name: "some name", status: "some status", phone_number: "some phone_number", email: "some email", avatar: "some avatar", document_id: "some document_id", note: "some note"}
+      valid_attrs = %{
+        name: "some name",
+        status: "some status",
+        phone_number: "some phone_number",
+        email: "some email",
+        avatar: "some avatar",
+        document_id: "some document_id",
+        note: "some note"
+      }
 
       assert {:ok, %Customer{} = customer} = Organization.create_customer(valid_attrs)
       assert customer.name == "some name"
@@ -97,7 +122,16 @@ defmodule Flowmind.OrganizationTest do
 
     test "update_customer/2 with valid data updates the customer" do
       customer = customer_fixture()
-      update_attrs = %{name: "some updated name", status: "some updated status", phone_number: "some updated phone_number", email: "some updated email", avatar: "some updated avatar", document_id: "some updated document_id", note: "some updated note"}
+
+      update_attrs = %{
+        name: "some updated name",
+        status: "some updated status",
+        phone_number: "some updated phone_number",
+        email: "some updated email",
+        avatar: "some updated avatar",
+        document_id: "some updated document_id",
+        note: "some updated note"
+      }
 
       assert {:ok, %Customer{} = customer} = Organization.update_customer(customer, update_attrs)
       assert customer.name == "some updated name"

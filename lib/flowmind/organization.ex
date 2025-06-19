@@ -127,12 +127,12 @@ defmodule Flowmind.Organization do
     tenant = Flowmind.TenantContext.get_tenant()
     Repo.all(Customer, prefix: tenant)
   end
-  
+
   def list_customers_with_check(%User{} = user) do
     tenant = Flowmind.TenantContext.get_tenant()
-  
+
     user_customer_ids = MapSet.new(Enum.map(user.customers, & &1.id))
-  
+
     Repo.all(Customer, prefix: tenant)
     |> Enum.map(fn customer ->
       if MapSet.member?(user_customer_ids, customer.id) do
@@ -142,7 +142,6 @@ defmodule Flowmind.Organization do
       end
     end)
   end
-
 
   @doc """
   Gets a single customer.

@@ -6,40 +6,54 @@ defmodule FlowmindWeb.ChatBubbleContent do
     ~H"""
     <div id={"chat-bubble-#{@chat.id}"}>
       <div :if={@chat.message_type == "text"} class="chat-bubble relative">
-        <div :if={is_struct(@chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+        <div
+          :if={is_struct(@chat.chat_history)}
+          class="chat-bubble border-l-4 border-l-blue-500 shadow"
+        >
           <.live_component
             module={FlowmindWeb.ChatThumbnail}
             id={"th-text-live-component-#{@chat.id}"}
-            chat={@chat.chat_history} />
+            chat={@chat.chat_history}
+          />
         </div>
         <div class="mr-5">{@chat.message}</div>
         <.live_component
           module={FlowmindWeb.ChatDropdown}
           id={"dd-live-component-#{@chat.id}"}
-          chat={@chat} />
+          chat={@chat}
+        />
       </div>
 
       <div :if={@chat.message_type == "application"} class="chat-bubble relative">
-        <div :if={is_struct(@chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+        <div
+          :if={is_struct(@chat.chat_history)}
+          class="chat-bubble border-l-4 border-l-blue-500 shadow"
+        >
           <.live_component
             module={FlowmindWeb.ChatThumbnail}
             id={"th-app-live-component-#{@chat.id}"}
-            chat={@chat.chat_history} />
+            chat={@chat.chat_history}
+          />
         </div>
         <canvas id="the-canvas-1" phx-hook="PdfPreview" data-docurl={@chat.message}></canvas>
         <.icon name="hero-document-text" /> {Path.basename(@chat.message)}
         <.live_component
           module={FlowmindWeb.ChatDropdown}
           id={"dd-live-component-#{@chat.id}"}
-          chat={@chat} />
+          chat={@chat}
+        />
       </div>
 
       <div :if={@chat.message_type == "image"} class="chat-bubble relative">
-        <div :if={is_struct(@chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+        <div
+          :if={is_struct(@chat.chat_history)}
+          class="chat-bubble border-l-4 border-l-blue-500 shadow"
+        >
           <.live_component
             module={FlowmindWeb.ChatThumbnail}
             id={"th-image-live-component-#{@chat.id}"}
-            chat={@chat.chat_history} />
+            chat={@chat.chat_history}
+          />
         </div>
         <img
           src={@chat.message}
@@ -50,15 +64,20 @@ defmodule FlowmindWeb.ChatBubbleContent do
         <.live_component
           module={FlowmindWeb.ChatDropdown}
           id={"dd-live-component-#{@chat.id}"}
-          chat={@chat} />
+          chat={@chat}
+        />
       </div>
 
       <div :if={@chat.message_type == "sticker"} class="chat-bubble relative">
-        <div :if={is_struct(@chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+        <div
+          :if={is_struct(@chat.chat_history)}
+          class="chat-bubble border-l-4 border-l-blue-500 shadow"
+        >
           <.live_component
             module={FlowmindWeb.ChatThumbnail}
             id={"th-sticker-live-component-#{@chat.id}"}
-            chat={@chat.chat_history} />
+            chat={@chat.chat_history}
+          />
         </div>
         <img
           src={@chat.message}
@@ -69,15 +88,20 @@ defmodule FlowmindWeb.ChatBubbleContent do
         <.live_component
           module={FlowmindWeb.ChatDropdown}
           id={"dd-live-component-#{@chat.id}"}
-          chat={@chat} />
+          chat={@chat}
+        />
       </div>
 
       <div :if={@chat.message_type == "audio"} class="chat-bubble relative">
-        <div :if={is_struct(@chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+        <div
+          :if={is_struct(@chat.chat_history)}
+          class="chat-bubble border-l-4 border-l-blue-500 shadow"
+        >
           <.live_component
             module={FlowmindWeb.ChatThumbnail}
             id={"th-audio-live-component-#{@chat.id}"}
-            chat={@chat.chat_history} />
+            chat={@chat.chat_history}
+          />
         </div>
         <audio controls class="appearance-none bg-transparent">
           <source src={@chat.message} type="audio/mpeg" />
@@ -86,15 +110,20 @@ defmodule FlowmindWeb.ChatBubbleContent do
         <.live_component
           module={FlowmindWeb.ChatDropdown}
           id={"dd-live-component-#{@chat.id}"}
-          chat={@chat} />
+          chat={@chat}
+        />
       </div>
-      
+
       <div :if={@chat.message_type == "video"} class="chat-bubble relative">
-        <div :if={is_struct(@chat.chat_history)} class="chat-bubble border-l-4 border-l-blue-500 shadow">
+        <div
+          :if={is_struct(@chat.chat_history)}
+          class="chat-bubble border-l-4 border-l-blue-500 shadow"
+        >
           <.live_component
             module={FlowmindWeb.ChatThumbnail}
             id={"th-video-live-component-#{@chat.id}"}
-            chat={@chat.chat_history} />
+            chat={@chat.chat_history}
+          />
         </div>
         <video controls class="w-64 h-auto md:w-80 lg:w-96 rounded-lg shadow-md">
           <source src={@chat.message} type="video/mp4" />
@@ -104,9 +133,9 @@ defmodule FlowmindWeb.ChatBubbleContent do
         <.live_component
           module={FlowmindWeb.ChatDropdown}
           id={"dd-live-component-#{@chat.id}"}
-          chat={@chat} />
+          chat={@chat}
+        />
       </div>
-
     </div>
     """
   end

@@ -3,6 +3,7 @@ defmodule FlowmindWeb.Live.TextIconComponent do
   # use Phoenix.LiveComponent
   attr :itype, :string, default: "text"
   attr :iid, :string, default: UUID.uuid4()
+
   def render(assigns) do
     ~H"""
     <div class="">

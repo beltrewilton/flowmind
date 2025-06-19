@@ -365,7 +365,7 @@ defmodule Flowmind.Accounts do
     )
     |> Repo.all()
   end
-  
+
   def get_users_by_tenant(tenant) do
     from(u in User,
       join: c in assoc(u, :company),
@@ -374,7 +374,6 @@ defmodule Flowmind.Accounts do
     )
     |> Repo.one()
   end
-
 
   def get_user_by_id!(id) do
     from(u in User,

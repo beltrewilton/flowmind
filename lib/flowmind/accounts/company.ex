@@ -8,7 +8,7 @@ defmodule Flowmind.Accounts.Company do
     field :company_name, :string
     field :tenant, :string
     field :phone_number_id, :string
-  
+
     timestamps(type: :utc_datetime)
   end
 

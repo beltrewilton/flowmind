@@ -29,6 +29,7 @@ import ClearInput from "./pdf_preview"
 import EditAlias from "./edit_alias"
 import SideBar from "./side_bar"
 import SideBarMenu from "./sidebar_menu"
+import GoogleAuthPopup from "./google_auth_popup"
 
 let hooks = {}
 hooks.PartnerMetaLogin = PartnerMetaLogin
@@ -39,6 +40,7 @@ hooks.PdfPreview = PdfPreview
 hooks.EditAlias = EditAlias
 hooks.SideBar = SideBar
 hooks.SideBarMenu = SideBarMenu
+hooks.GoogleAuthPopup = GoogleAuthPopup
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {

@@ -8,7 +8,7 @@ defmodule WebHookLogSchema do
     field(:source, :string)
     field(:response, :map)
     field(:waba_id, :string)
-    
+
     timestamps(type: :utc_datetime)
   end
 
@@ -36,7 +36,7 @@ defmodule CTALogSchema do
     field(:user_agent, :string)
     field(:campaign, :string)
     field(:waba_id, :string)
-    
+
     timestamps(type: :utc_datetime)
   end
 

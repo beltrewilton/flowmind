@@ -30,8 +30,7 @@ defmodule Flowmind.EmbeddingGenserver do
       Bumblebee.load_model({:hf, @model_id})
 
     {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, @model_id})
-    
-    
+
     serving =
       Bumblebee.Text.text_embedding(model, tokenizer,
         output_attribute: :hidden_state,

@@ -46,6 +46,16 @@ defmodule FlowmindWeb.Router do
     end
   end
 
+  scope "/", FlowmindWeb do
+    pipe_through [:browser]
+
+    live_session :default do
+      live "/google_helper", GoogleLiveHelper, :index
+    end
+
+    get "/google_auth_url", GoogleAuthController, :redirect_to
+  end
+
   ## Authentication routes
 
   scope "/", FlowmindWeb do
@@ -86,7 +96,7 @@ defmodule FlowmindWeb.Router do
       on_mount: [
         {FlowmindWeb.UserAuth, :ensure_authenticated},
         {FlowmindWeb.UserAuth, :ensure_admin_or_user},
-        {FlowmindWeb.AttachHookUtil, :attach_hook_util},
+        {FlowmindWeb.AttachHookUtil, :attach_hook_util}
       ] do
       live "/userlist", UserListLive, :index
       live "/userprofile/:id", UserProfileLive, :index

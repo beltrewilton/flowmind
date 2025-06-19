@@ -221,7 +221,7 @@ defmodule FlowmindWeb.UserAuth do
     socket =
       socket
       |> Phoenix.Component.assign(:chat_inbox, chat_inbox)
-      
+
     {:cont, socket}
   end
 

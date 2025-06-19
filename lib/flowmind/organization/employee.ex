@@ -8,7 +8,7 @@ defmodule Flowmind.Organization.Employee do
     field :status, Ecto.Enum, values: [:active, :inactive], default: :active
     field :job_title, :string
     field :department, :string
-    
+
     belongs_to :user, Flowmind.Accounts.User
 
     timestamps(type: :utc_datetime)

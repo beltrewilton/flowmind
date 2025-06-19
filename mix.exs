@@ -34,8 +34,7 @@ defmodule Flowmind.MixProject do
     # export WHATSAPPX_PATH=/Users/beltre.wilton/apps/whatsappx
     whatsappx_path = System.get_env("WHATSAPPX_PATH")
     # country_lookup = System.get_env("COUNTRY_LOOKUP")
-    
-    
+
     [
       {:argon2_elixir, "~> 3.0"},
       {:phoenix, "~> 1.7.18"},
@@ -45,7 +44,8 @@ defmodule Flowmind.MixProject do
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.0.0"},
-      {:floki, ">= 0.30.0", only: :test},
+      # {:floki, ">= 0.30.0", only: :test},
+      {:floki, ">= 0.30.0"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
@@ -71,10 +71,12 @@ defmodule Flowmind.MixProject do
       {:pgvector, "~> 0.3.0"},
       {:bumblebee, "~> 0.6.0"},
       {:exla, "~> 0.9.2"},
+      {:oauth2, "~> 2.1"},
       {:text_chunker, "~> 0.3.2"},
       {:daisy_ui_components, "~> 0.8"},
       {:whatsappx, path: whatsappx_path},
-      {:country_lookup, "~> 0.0.2"}
+      {:country_lookup, "~> 0.0.2"},
+      {:google_api_gmail, "~> 0.17.0"}
     ]
   end
 

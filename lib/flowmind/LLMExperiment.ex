@@ -136,7 +136,7 @@ defmodule Flowmind.LLMExperiment do
   # => "The hairbrush is located in the drawer."
   #
   def embedding(input, model_id) when is_binary(input), do: embedding([input], model_id)
-  
+
   def embedding(input, model_id) do
     # model_id = "sentence-transformers/all-MiniLM-L6-v2"
     {:ok, model_info} = Bumblebee.load_model({:hf, model_id}, module: Bumblebee.Text.Bert)

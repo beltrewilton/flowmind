@@ -23,14 +23,14 @@ defmodule Flowmind.Embedding do
       format: :plaintext,
       strategy: TextChunker.Strategies.RecursiveChunk
     ]
-    
+
     TextChunker.split(data, opts)
     |> Enum.chunk_every(b)
     |> Enum.each(fn batch ->
-      text = batch |> Enum.map(& &1.text |> String.replace(["\n", "*"], ""))
-        IO.inspect(text)
-        ingest(text, "search_document")
-      end)
+      text = batch |> Enum.map(&(&1.text |> String.replace(["\n", "*"], "")))
+      IO.inspect(text)
+      ingest(text, "search_document")
+    end)
   end
 
   def ingest(input, task) when is_binary(input), do: ingest([input], task)
@@ -38,8 +38,8 @@ defmodule Flowmind.Embedding do
   def ingest(input, task \\ "search_document") do
     tenant = Flowmind.TenantContext.get_tenant()
 
+    # input |> Stream.map(fn i -> "#{task}: #{i}" end) |> Enum.to_list()
     input_mask =
-      # input |> Stream.map(fn i -> "#{task}: #{i}" end) |> Enum.to_list()
       input |> Stream.map(fn i -> i end) |> Enum.to_list()
 
     embedding = EmbeddingGenserver.embed(input_mask)
@@ -56,7 +56,7 @@ defmodule Flowmind.Embedding do
     # IO.inspect("#{task}: #{text}")
     # [embedding] = EmbeddingGenserver.embed("#{task}: #{text}")
     [embedding] = EmbeddingGenserver.embed(text)
-    
+
     Repo.all(
       from d in Document,
         prefix: ^tenant,
@@ -65,17 +65,16 @@ defmodule Flowmind.Embedding do
         limit: ^k
     )
   end
-  
+
   def import_embedded_documents do
     tenant = Flowmind.TenantContext.get_tenant()
-  
+
     %Postgrex.Result{:rows => rows} =
       Ecto.Adapters.SQL.query!(Repo, "SELECT text FROM ceidy.documents_copy", [])
-    
-  
+
     Enum.each(rows, fn [text] ->
       [embedding] = EmbeddingGenserver.embed(text)
-  
+
       %Flowmind.Embed.Document{}
       |> Flowmind.Embed.Document.changeset(%{
         text: text,
@@ -84,5 +83,4 @@ defmodule Flowmind.Embedding do
       |> Repo.insert!(prefix: tenant)
     end)
   end
-
 end

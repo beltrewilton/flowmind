@@ -42,10 +42,7 @@ defmodule FlowmindWeb.ChatLiveLanding do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-[90vh]">
-
-
-    </div>
+    <div class="flex flex-col h-[90vh]"></div>
     """
   end
 end
