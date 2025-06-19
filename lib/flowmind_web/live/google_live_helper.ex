@@ -106,7 +106,7 @@ defmodule FlowmindWeb.GoogleLiveHelper do
         strategy: OAuth2.Strategy.AuthCode,
         client_id: System.fetch_env!("GOOGLE_CALENDAR_CLIENT_ID"),
         client_secret: System.fetch_env!("GOOGLE_CALENDAR_CLIENT_SECRET"),
-        redirect_uri: "https://flowmind.loca.lt/google_helper",
+        redirect_uri: "https://en3ga2.wiltonbeltre.com/google_helper",
         site: "https://accounts.google.com",
         authorize_url: "https://accounts.google.com/o/oauth2/auth",
         token_url: "https://oauth2.googleapis.com/token"
@@ -123,7 +123,7 @@ defmodule FlowmindWeb.GoogleLiveHelper do
 
   defp google_auth_url do
     client_id = System.fetch_env!("GOOGLE_CALENDAR_CLIENT_ID")
-    redirect_uri = URI.encode("https://flowmind.loca.lt/google_helper")
+    redirect_uri = URI.encode("https://en3ga2.wiltonbeltre.com/google_helper")
 
     scope =
       URI.encode(
